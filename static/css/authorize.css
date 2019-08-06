@@ -1,0 +1,21 @@
+.message {
+    padding-top: 5em;
+    line-height: 150%;
+    font-size: 1.5em;
+    width: 90%;
+}
+#login-button {
+    width: 20em;
+    border-radius: 7px;
+    margin-top: 4em;
+    border: white solid 7px;
+}
+
+@media only screen and (min-width: 450px) {
+    .message {
+        padding-top: 15vh;
+    }
+    #login-button {
+        margin-top: 15vh;
+    }
+}

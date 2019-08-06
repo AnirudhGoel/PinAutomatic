@@ -1,27 +1,62 @@
 import os
+import datetime
 from flask import Flask, render_template, session, request
-from dotenv import load_dotenv
+from flask_babelex import Babel
 
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-PINTEREST_CLIENT_ID = os.getenv("PINTEREST_CLIENT_ID")
+from flask_sqlalchemy import SQLAlchemy
+from flask_user import current_user, login_required, roles_required, UserManager, UserMixin
+from .config import ConfigClass
+
 
 app = Flask(__name__)
+app.config.from_object(ConfigClass)
+
+PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID")
+
+
+db = SQLAlchemy(app)
+from .models import User, Role
+babel = Babel(app)
+
+# Setup Flask-User and specify the User data-model
+user_manager = UserManager(app, db, User)
+
+# Create all database tables
+db.create_all()
+
+
+# Create 'admin@example.com' user with 'Admin' role
+if not User.query.filter(User.email == 'admin@example.com').first():
+    user = User(
+        email='admin@example.com',
+        email_confirmed_at=datetime.datetime.utcnow(),
+        password=user_manager.hash_password('yankring'),
+    )
+    user.roles.append(Role(name='Admin'))
+    db.session.add(user)
+    db.session.commit()
+
+
+
+
 
 
 @app.route('/')
+@login_required
 def index():
-
-    client_id = PINTEREST_CLIENT_ID
+    credentials = {
+        'client_id': PINTEREST_CLIENT_ID
+    }
 
     if 'pa-token' in session:
         return render_template('index.html', title='Home')
     else:
-        return render_template('login.html', title='Login')
+        return render_template('authorize.html', title='Login', credentials=credentials)
 
 
-@app.route('/login', methods=['POST'])
-def login():
+
+# The Admin page requires an 'Admin' role.
+@app.route('/admin')
+@roles_required('Admin')    # Use of @roles_required decorator
+def admin_page():
     pass
-    # session['username'] = request.form['username']
-    # return redirect(url_for('index'))

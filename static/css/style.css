@@ -1,10 +1,18 @@
 @import 'https://fonts.googleapis.com/css?family=Josefin+Sans:300';
 body {
-	background-color: rgba(211, 84, 0, 0.2) !important;
-	min-height: 100vh;
+	/*background-color: rgba(211, 84, 0, 0.2);*/
+	background-color: white;
 	/*font-family: 'Josefin Sans', sans-serif !important;*/
 	font-family: 'Brandon Text', sans-serif;
 	font-weight: 300;
+}
+
+.container {
+	width: 90%;
+	background-color: rgba(211, 84, 0, 0.2);
+	padding: 10px 10px 70px 10px;
+	border-radius: 10px;
+	margin-top: 25px;
 }
 
 .intro-image {
@@ -49,30 +57,30 @@ h1 {
 	font-size: 17px;
 }
 
-@media (max-width: 770px) {
+@media only screen and (min-width: 450px) {
+	.container {
+		width: 400px;
+		margin-top: 10vh;
+		min-height: 80vh;
+	}
 	h1 {
 		font-size: 20px !important;
 		display: inline;
 	}
-
 	.title {
 		margin-top: 30px;
 		text-align: center;
 	}
-
 	.input-box {
 		margin-top: 10px;
 		text-align: center;
 	}
-
 	.input-area {
 		padding-top: 10px;
 	}
-
 	.btn-danger, .btn-warning {
 		margin-top: 60px;
 	}
-
 	.intro-image {
 		margin-bottom: 15px;
 	}
