@@ -1,0 +1,79 @@
+@import 'https://fonts.googleapis.com/css?family=Josefin+Sans:300';
+body {
+	background-color: rgba(211, 84, 0, 0.2) !important;
+	min-height: 100vh;
+	/*font-family: 'Josefin Sans', sans-serif !important;*/
+	font-family: 'Brandon Text', sans-serif;
+	font-weight: 300;
+}
+
+.intro-image {
+	margin-top: 30px;
+	margin-bottom: 80px;
+}
+
+h1 {
+	font-size: 25px !important;
+	display: inline;
+}
+
+.input-area {
+	padding-top: 10px;
+}
+
+.btn-danger, .btn-warning {
+	margin-top: 90px;
+}
+
+.title {
+	margin-top: 40px;
+	text-align: right;
+}
+
+.input-box {
+	margin-top: 40px;
+	text-align: left;
+}
+
+#err1, #err2 {
+	color: red;
+	font-size: 18px;
+}
+
+#response {
+	color: red;
+}
+
+.modal-body {
+	text-align: left;
+	font-size: 17px;
+}
+
+@media (max-width: 770px) {
+	h1 {
+		font-size: 20px !important;
+		display: inline;
+	}
+
+	.title {
+		margin-top: 30px;
+		text-align: center;
+	}
+
+	.input-box {
+		margin-top: 10px;
+		text-align: center;
+	}
+
+	.input-area {
+		padding-top: 10px;
+	}
+
+	.btn-danger, .btn-warning {
+		margin-top: 60px;
+	}
+
+	.intro-image {
+		margin-bottom: 15px;
+	}
+}
