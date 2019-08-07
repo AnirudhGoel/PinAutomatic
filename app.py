@@ -1,6 +1,6 @@
 import os
 import datetime
-from flask import Flask, render_template, session, request
+from flask import Flask, render_template, session, request, redirect, url_for, flash
 from flask_babelex import Babel
 
 from flask_sqlalchemy import SQLAlchemy
@@ -39,8 +39,6 @@ if not User.query.filter(User.email == 'admin@example.com').first():
 
 
 
-
-
 @app.route('/')
 @login_required
 def index():
@@ -53,6 +51,26 @@ def index():
     else:
         return render_template('authorize.html', title='Login', credentials=credentials)
 
+
+@app.route('/pinterest-auth')
+@login_required
+def pinterest_auth():
+    if request.args.get('state', None) == "secret":
+        if request.args.get('code', None):
+            temp_code = request.args.get('code', None)
+            return redirect(url_for('get_and_save_token'), temp_code=temp_code)
+        else:
+            flash("You need to provide authorization to PinterestAutomatic to allow adding of pins to your board.", category='error')
+            return redirect(url_for('index'))
+    else:
+        return redirect(url_for('logout_user'))
+
+
+
+@login_required
+def get_and_save_token(temp_code):
+    print(temp_code)
+    pass
 
 
 # The Admin page requires an 'Admin' role.

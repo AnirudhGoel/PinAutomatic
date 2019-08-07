@@ -10,7 +10,7 @@ body {
 .container {
 	width: 90%;
 	background-color: rgba(211, 84, 0, 0.2);
-	padding: 10px 10px 70px 10px;
+	padding: 10px 10px 2em 10px;
 	border-radius: 10px;
 	margin-top: 25px;
 }
@@ -61,7 +61,6 @@ h1 {
 	.container {
 		width: 400px;
 		margin-top: 10vh;
-		min-height: 80vh;
 	}
 	h1 {
 		font-size: 20px !important;
