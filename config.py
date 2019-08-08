@@ -32,8 +32,3 @@ class ConfigClass(object):
     USER_EMAIL_SENDER_NAME = USER_APP_NAME
     USER_EMAIL_SENDER_EMAIL = environ.get('USER_EMAIL_SENDER_EMAIL')
     USER_AFTER_LOGOUT_ENDPOINT = environ.get('SITE_SCHEME' + "://" + 'SITE_DOMAIN')
-
-    print(environ.get('USER_ENABLE_USERNAME'))
-    print(USER_ENABLE_USERNAME)
-
-
