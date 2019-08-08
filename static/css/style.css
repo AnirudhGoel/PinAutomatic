@@ -30,20 +30,23 @@ h1 {
 }
 
 .btn-danger, .btn-warning {
-	margin-top: 90px;
+	margin-top: 3em;
 }
 
 .title {
-	margin-top: 40px;
-	text-align: right;
+	margin-bottom: 0.5em;
+	font-size: 1.8em;
+	font-weight: bolder;
 }
 
 .input-box {
-	margin-top: 40px;
-	text-align: left;
+	margin-bottom: 2.4em;
+}
+.status-box {
+	background-color: rgba(211, 84, 0, 0.2);
 }
 
-#err1, #err2 {
+#err1, #err2, #err {
 	color: red;
 	font-size: 18px;
 }

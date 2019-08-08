@@ -12,7 +12,7 @@ class User(db.Model, UserMixin):
     # to search case insensitively when USER_IFIND_MODE is 'nocase_collation'.
     email = db.Column(db.String(255, collation='C'), nullable=False, unique=True, index=True)
     email_confirmed_at = db.Column(db.DateTime())
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     # username = db.Column(db.String(255, collation='C'), nullable=True, unique=True, server_default=None)
     password = db.Column(db.String(255), nullable=False, server_default='')
 
@@ -28,7 +28,7 @@ class User(db.Model, UserMixin):
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(50), unique=True)
+    name = db.Column(db.String(50), unique=True, nullable=False, default="")
 
 
 # Define the UserRoles association table
@@ -40,13 +40,40 @@ class UserRoles(db.Model):
 
 
 class Token(db.Model):
+    __tablename__ = 'tokens'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    token = db.Column(db.String(100), unique=True)
+    token = db.Column(db.String(100), unique=True, nullable=False, default="")
 
 
 class Stats(db.Model):
+    __tablename__ = 'stats'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    total_pins = db.Column(db.Integer(), default=0)
-    last_pin_at = db.Column(db.DateTime(), default=None)
+    total_pins = db.Column(db.Integer(), server_default='0')
+    last_pin_at = db.Column(db.DateTime(), server_default=None)
+
+
+class PinData(db.Model):
+    __tablename__ = 'pin_data'
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
+    source_board = db.Column(db.String(300), index=True, nullable=False, default="")
+    destination_board = db.Column(db.String(300), index=True, nullable=False, default="")
+    pins_copied = db.Column(db.Integer(), server_default='0')
+    cursor = db.Column(db.String(300), nullable=False, default="")
+
+
+class PinterestData(db.Model):
+    __tablename__ = 'pinterest_data'
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
+    pinterest_id = db.Column(db.BigInteger())
+    username = db.Column(db.String(300), nullable=False, default="")
+    first_name = db.Column(db.String(300), nullable=False, default="")
+    last_name = db.Column(db.String(300), nullable=False, default="")
+    pins = db.Column(db.Integer())
+    boards = db.Column(db.Integer())
+    following = db.Column(db.Integer())
+    followers = db.Column(db.Integer())
+

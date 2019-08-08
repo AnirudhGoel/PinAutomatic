@@ -2,18 +2,17 @@
 
 
 {% block content %}
-	<div class="container" align="center">
-		<!-- Modal -->
-		<div id="help" class="modal fade" role="dialog">
-			<div class="modal-dialog modal-lg">
+	<!-- Modal -->
+	<div id="help" class="modal fade" role="dialog">
+		<div class="modal-dialog modal-lg">
 
-		    <!-- Modal content-->
-		    <div class="modal-content">
-		    	<div class="modal-header">
-		        	<button type="button" class="close" data-dismiss="modal">&times;</button>
-		        	<h4 class="modal-title">Help</h4>
-		    	</div>
-		    	<div class="modal-body">
+			<!-- Modal content-->
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">Help</h4>
+				</div>
+				<div class="modal-body">
 					<h1>Working</h1>
 					<br><br>
 					Once you're logged in, you don't need to login again unless there has been an inactivity for more than 7 days or you clear out your cookies. The app stores your Pinterest Token in cookies, so enable cookies to avoid logging in everytime you use this app. <br>
@@ -30,42 +29,36 @@
 
 					<h2>Disclaimer</h2>
 					This app complies completely with <a href="https://developers.pinterest.com/policy/">Pinterest Developer's Policy</a>. If you have any issues contact me via <a href="http://scr.im/3hmx">email</a>.
-		    	</div>
-		    	<div class="modal-footer">
-		        	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		    	</div>
-		    </div>
-
-		  </div>
-		</div>
-
-		<div class="input-area">
-			<form onsubmit="pinThem(event);">
-				<div class="col-md-6 col-sm-12 col-xs-12 title" style="padding-top: 8px;">
-					<h1>Source Board</h1>
 				</div>
-				<div class="col-md-6 col-sm-12 col-xs-12 input-box">
-					<input type="text" id="source_board" class="input-lg" placeholder="username/board">
-					<div id="err1"></div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 				</div>
-
-				<div class="col-md-6 col-sm-12 col-xs-12 title" style="padding-top: 8px;">
-					<h1>Destination Board</h1>
-				</div>
-				<div class="col-md-6 col-sm-12 col-xs-12 input-box">
-					<input type="text" id="destination_board" class="input-lg" placeholder="username/board">
-					<div id="err2"></div>
-				</div>
-				<button class="btn btn-lg btn-warning" type="button" data-toggle="modal" data-target="#help">Help</button>
-				<input type="submit" class="btn btn-lg btn-danger" value="Pin Them !">
-				<br><br>
-			</form>
-
-			<br>
-			<div id="response" align="center"></div>
+			</div>
 		</div>
 	</div>
 
+	<div class="input-area">
+		<form onsubmit="pinThem(event);">
+			<div class="title">Source Board</div>
+			<div class="input-box">
+				<input type="text" id="source_board" class="input-lg" placeholder="username/board">
+				<div id="err1"></div>
+			</div>
 
-	<script type="text/javascript" src="js/pin.js"></script>
+			<div class="title">Destination Board</div>
+			<div class="input-box">
+				<input type="text" id="destination_board" class="input-lg" placeholder="username/board">
+				<div id="err2"></div>
+			</div>
+			<div class="text">Number of requests left for the hour: <span id="pins-left"></span></div>
+			<br><br>
+			<div class="status-box">Status: <span id="status"></span></div>
+			<button class="btn btn-lg btn-warning" type="button" data-toggle="modal" data-target="#help">Help</button>
+			<input type="submit" class="btn btn-lg btn-danger" id="pin-button" value="Pin Them !">
+			<br><br>
+		</form>
+	</div>
+{% endblock %}
+{% block script %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/pin.js') }}"></script>
 {% endblock %}
