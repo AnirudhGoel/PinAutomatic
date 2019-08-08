@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, session, request, redirect, url_for, flash
+from flask import Flask, render_template, session, request, redirect, url_for, flash, jsonify
 from flask_babelex import Babel
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import current_user, login_required
@@ -13,7 +13,7 @@ app.config.from_object(ConfigClass)
 
 db = SQLAlchemy(app)
 babel = Babel(app)
-from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details
+from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, save_pins, update_pin_data, update_stats
 
 # Create all database tables and create admin
 # db.create_all()
@@ -38,6 +38,7 @@ def home():
     }
 
     if 'pa-token' in session:
+        session['status'] = ""
         return render_template('index.html', title='Home')
     else:
         return render_template('authorize.html', title='Login', credentials=credentials)
@@ -70,9 +71,17 @@ def pin_it():
     cont = urlparse.parse_qs(parsed.query)['cont'][0]
     cursor = urlparse.parse_qs(parsed.query)['cursor'][0]
 
-    next_pins = get_next_pins(source, requests_left, cont, cursor)
+    all_pins = get_next_pins(source, requests_left, cont, cursor)
+    res = save_pins(all_pins, destination)
 
-    return next_pins
+    update_pin_data(source, destination, res["pins_added"], res["last_cursor"])
+    update_stats(res["pins_added"])
+
+    response = {
+        "data": str(res["pins_added"]) + " pins(s) added successfully.",
+        "code": 200
+    }
+    return jsonify(response)
 
 
 @app.route('/get-requests-left')
@@ -103,10 +112,10 @@ def check_last_pin_status():
     return res
 
 
-@app.route('check-session-status')
+@app.route('/check-session-status')
 @login_required
 def check_session_status():
-    
+    return session['status']
 
 
 # # The Admin page requires an 'Admin' role.
