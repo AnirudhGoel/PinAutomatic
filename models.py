@@ -82,4 +82,4 @@ class IPDetails(db.Model):
     __tablename__ = 'ip_details'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    ip_address = db.Column(db.String(300), nullable=False, default="", unique=True)
+    ip_address = db.Column(db.String(300), nullable=False, default="")

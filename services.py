@@ -100,7 +100,7 @@ def save_ip():
         db.session.add(ip_details)
         db.session.commit()
 
-        return True
+    return True
 
 
 def get_last_pin_details(source, destination):
