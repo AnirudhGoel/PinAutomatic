@@ -17,6 +17,7 @@ Flask-Script==2.0.6
 Flask-SQLAlchemy==2.4.0
 Flask-User==1.0.1.5
 Flask-WTF==0.14.2
+gunicorn==19.9.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10.1
