@@ -19,7 +19,9 @@ from services import get_token, save_token_to_database, get_next_pins, save_prof
 # db.create_all()
 # create_admin_if_not_exists()
 
-PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID")
+PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID", default="4844984301336407368")
+SITE_SCHEME = os.environ.get("SITE_SCHEME", default="https")
+SITE_DOMAIN = os.environ.get("SITE_DOMAIN", default="pinterestautomatic.herokuapp.com")
 
 
 @app.route('/')
@@ -34,7 +36,8 @@ def index():
 @login_required
 def home():
     credentials = {
-        'client_id': PINTEREST_CLIENT_ID
+        'client_id': PINTEREST_CLIENT_ID,
+        'redirect_uri': SITE_SCHEME + "://" + SITE_DOMAIN
     }
 
     if 'pa-token' in session:
