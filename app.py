@@ -13,7 +13,7 @@ app.config.from_object(ConfigClass)
 
 db = SQLAlchemy(app)
 babel = Babel(app)
-from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, save_pins, update_pin_data, update_stats
+from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, save_pins, update_pin_data, update_stats, save_ip
 
 # Create all database tables and create admin
 # db.create_all()
@@ -100,6 +100,7 @@ def pin_it():
 def get_requests_left():
     requests_left = save_profile_and_return_requests_left()
     session["req_left"] = requests_left
+    save_ip()
     return requests_left
 
 
