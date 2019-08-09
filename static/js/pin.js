@@ -1,13 +1,19 @@
 var requests_left = 1000;
 var cont = false;
 var cursor = false;
+var t;
+var done = 0;
 
 $(document).ready(function() {
     getRequestsLeft();
+    updater();
 });
 
 function pinThem(event) {
 	event.preventDefault();
+
+	done = 0;
+
 	var err1 = $("#err1");
 	var err2 = $("#err2");
 
@@ -34,11 +40,9 @@ function pinThem(event) {
         }
 
         $("#pin-button").attr("disabled", true);
-        $('#status').text("Pinning...");
 
         $.get("pin-it", {source: source_board, destination: destination_board, requests_left: requests_left, cont: cont, cursor: cursor}, function(result) {
             console.log(result);
-            $("#pin-button").attr("disabled", false);
             updater();
         });
     });
@@ -58,10 +62,14 @@ function extractBoard(board) {
 
 function getRequestsLeft() {
     $.get('get-requests-left', function (data) {
-        requests_left = data;
-        console.log(requests_left);
+        if (data.code == 401) {
+            window.location.href = data.data;
+        } else if (data.code == 200) {
+            requests_left = data.data;
+            console.log(requests_left);
 
-        $("#pins-left").text(requests_left);
+            $("#pins-left").text(requests_left);
+        }
     });
 }
 
@@ -71,9 +79,22 @@ function updater() {
         success: function(data) {
             console.log(data);
             status = data.status;
-            requests_left = data.requests_left;
             $('#status').text(status);
-            $("#pins-left").text(requests_left);
+            if (data.code == 200 || data.code == 404 || data.code == 500) {
+                done = 1;
+                $("#pin-button").attr("disabled", false);
+            }
+        },
+        complete: function() {
+            // Schedule the next request when the current one's complete
+            if (done == 1) {
+                clearTimeout(t);
+                console.log("Clear Timeout");
+                getRequestsLeft();
+                return;
+            }
+
+            t = setTimeout(updater, 4000);
         }
     });
 }

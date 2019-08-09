@@ -75,6 +75,7 @@ h1 {
 	.container {
 		width: 500px;
 		margin-top: 5vh;
+		margin-bottom: 5vh;
 	}
 	h1 {
 		font-size: 20px !important;

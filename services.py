@@ -58,36 +58,35 @@ def save_profile_and_return_requests_left():
     url_params = urllib.parse.urlencode(params)
     url = PINTEREST_API_BASE_URL + '/me?' + url_params
     r = requests.get(url, params)
-    res = r.json()
+    if r.status_code == 200:
+        res = r.json()
+        res = res["data"]
 
-    print(res)
+        if not PinterestData.query.filter_by(user_id=current_user.id).first():
+            pinterest_data = PinterestData(
+                user_id=current_user.id,
+                pinterest_id=res["id"],
+                username=res["username"],
+                first_name=res["first_name"],
+                last_name=res["last_name"],
+                pins=res["counts"]["pins"],
+                boards=res["counts"]["boards"],
+                followers=res["counts"]["followers"],
+                following=res["counts"]["following"],
+            )
+            db.session.add(pinterest_data)
+        else:
+            pinterest_data_instance = PinterestData.query.filter_by(user_id=current_user.id).first()
+            pinterest_data_instance.username = res["username"]
+            pinterest_data_instance.pins = res["counts"]["pins"]
+            pinterest_data_instance.boards = res["counts"]["boards"]
+            pinterest_data_instance.followers = res["counts"]["followers"]
+            pinterest_data_instance.following = res["counts"]["following"]
 
-    res = res["data"]
-
-    if not PinterestData.query.filter_by(user_id=current_user.id).first():
-        pinterest_data = PinterestData(
-            user_id=current_user.id,
-            pinterest_id=res["id"],
-            username=res["username"],
-            first_name=res["first_name"],
-            last_name=res["last_name"],
-            pins=res["counts"]["pins"],
-            boards=res["counts"]["boards"],
-            followers=res["counts"]["followers"],
-            following=res["counts"]["following"],
-        )
-        db.session.add(pinterest_data)
-    else:
-        pinterest_data_instance = PinterestData.query.filter_by(user_id=current_user.id).first()
-        pinterest_data_instance.username = res["username"]
-        pinterest_data_instance.pins = res["counts"]["pins"]
-        pinterest_data_instance.boards = res["counts"]["boards"]
-        pinterest_data_instance.followers = res["counts"]["followers"]
-        pinterest_data_instance.following = res["counts"]["following"]
-
-    db.session.commit()
-
-    return r.headers['X-RateLimit-Remaining']
+        db.session.commit()
+        return {"data": r.headers['X-RateLimit-Remaining'], "code": 200}
+    elif r.status_code == 401:
+        return {"data": "Access token invalid.", "code": 401}
 
 
 def save_ip():
@@ -118,10 +117,10 @@ def get_last_pin_details(source, destination):
     return data
 
 
-def update_pin_data(source, destination, pins_added, last_cursor):
-    if not PinData.query.filter_by(user_id=current_user.id, source_board=source, destination_board=destination).first():
+def update_pin_data(source, destination, pins_added, last_cursor, current_user_id):
+    if not PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first():
         pin_data = PinData(
-            user_id=current_user.id,
+            user_id=current_user_id,
             source_board=source,
             destination_board=destination,
             pins_copied=pins_added,
@@ -129,7 +128,7 @@ def update_pin_data(source, destination, pins_added, last_cursor):
         )
         db.session.add(pin_data)
     else:
-        pin_data_instance = PinData.query.filter_by(user_id=current_user.id, source_board=source, destination_board=destination).first()
+        pin_data_instance = PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first()
         pin_data_instance.pins_copied += pins_added
         pin_data_instance.cursor = last_cursor
 
@@ -137,16 +136,16 @@ def update_pin_data(source, destination, pins_added, last_cursor):
     return True
 
 
-def update_stats(pin_added):
-    if not Stats.query.filter_by(user_id=current_user.id).first():
+def update_stats(pin_added, current_user_id):
+    if not Stats.query.filter_by(user_id=current_user_id).first():
         stats = Stats(
-            user_id=current_user.id,
+            user_id=current_user_id,
             total_pins=pin_added,
             last_pin_at=datetime.utcnow()
         )
         db.session.add(stats)
     else:
-        stats_instance = Stats.query.filter_by(user_id=current_user.id).first()
+        stats_instance = Stats.query.filter_by(user_id=current_user_id).first()
         stats_instance.total_pins += pin_added
         stats_instance.last_pin_at = datetime.utcnow()
 
@@ -199,34 +198,3 @@ def get_next_pins(source, num, cont, cursor):
     }
 
     return response
-
-
-def save_pins(pins, destination, last_cursor):
-    counter = 0
-    for pin in pins:
-        url = PINTEREST_API_BASE_URL + '/pins/?access_token=' + session['pa-token'] + "&fields=id"
-
-        post_data = {
-            "board": destination,
-            "note": pin["note"],
-            # "link": pin["link"],      Adding links is not feasible as these are
-            #                           Pinterest Links and Pinterest API doesn't
-            #                           allow adding them.
-            "image_url": pin["image"]["original"]["url"]
-        }
-
-        r = requests.post(url, data=post_data)
-
-        if r.status_code == 201:
-            counter = counter + 1
-            session["req_left"] = str(r.headers['X-RateLimit-Remaining'])
-            session["status"] = "Pins added: " + str(counter)
-
-    del pins
-
-    res = {
-        "last_cursor": last_cursor,
-        "pins_added": counter
-    }
-
-    return res

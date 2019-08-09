@@ -4,22 +4,30 @@ from flask_babelex import Babel
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import current_user, login_required
 from config import ConfigClass
+from rq import Queue
+import requests
+from rq.job import Job
+from worker import conn
 import urllib.parse as urlparse
 
+persistent_data = dict()
+persistent_data['status'] = ""
 
 app = Flask(__name__)
 app.config.from_object(ConfigClass)
 
+q = Queue(connection=conn, default_timeout=1200)
 
 db = SQLAlchemy(app)
 babel = Babel(app)
-from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, save_pins, update_pin_data, update_stats, save_ip
+from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip
 
 # Create all database tables and create admin
 # db.create_all()
 # create_admin_if_not_exists()
 
 PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID", default="4844984301336407368")
+PINTEREST_API_BASE_URL = os.environ.get("PINTEREST_API_BASE_URL")
 SITE_SCHEME = os.environ.get("SITE_SCHEME", default="https")
 SITE_DOMAIN = os.environ.get("SITE_DOMAIN", default="pinterestautomatic.herokuapp.com")
 
@@ -39,12 +47,13 @@ def home():
         'client_id': PINTEREST_CLIENT_ID,
         'redirect_uri': SITE_SCHEME + "://" + SITE_DOMAIN
     }
+    persistent_data['status'] = ""
 
     if 'pa-token' in session:
-        session['status'] = ""
         return render_template('index.html', title='Home')
     else:
         return render_template('authorize.html', title='Login', credentials=credentials)
+
 
 @app.route('/pinterest-auth')
 @login_required
@@ -64,10 +73,12 @@ def pinterest_auth():
     else:
         return redirect('/user/sign-out')
 
+
 @app.route('/pin-it')
 @login_required
 def pin_it():
-    session['status'] = ""
+    persistent_data['status'] = ""
+    persistent_data['job_id'] = ""
 
     parsed = urlparse.urlparse(request.url)
     source = urlparse.parse_qs(parsed.query)['source'][0]
@@ -75,6 +86,7 @@ def pin_it():
     requests_left = urlparse.parse_qs(parsed.query)['requests_left'][0]
     cont = urlparse.parse_qs(parsed.query)['cont'][0]
     cursor = urlparse.parse_qs(parsed.query)['cursor'][0]
+    pa_token = session['pa-token']
 
     try:
         r = get_next_pins(source, requests_left, cont, cursor)
@@ -84,15 +96,15 @@ def pin_it():
         abort(400)
 
     try:
-        res = save_pins(all_pins, destination, last_cursor)
+        job = q.enqueue_call(
+            func=save_pins, args=(all_pins, source, destination, last_cursor, pa_token, current_user.id), result_ttl=1200
+        )
+        session['job_id'] = job.get_id()
     except:
         abort(400)
 
-    update_pin_data(source, destination, res["pins_added"], res["last_cursor"])
-    update_stats(res["pins_added"])
-
     response = {
-        "data": str(res["pins_added"]) + " pins(s) added successfully.",
+        "data": "Pins(s) will be added.",
         "code": 200
     }
     return jsonify(response)
@@ -101,10 +113,15 @@ def pin_it():
 @app.route('/get-requests-left')
 @login_required
 def get_requests_left():
-    requests_left = save_profile_and_return_requests_left()
-    session["req_left"] = requests_left
+    res = save_profile_and_return_requests_left()
+    if res['code'] == 200:
+        requests_left = res['data']
+    elif res['code'] == 401:
+        session.pop('pa-token')
+        return {'code': 401, 'data': '/user/sign-out'}
+    session['req_left'] = requests_left
     save_ip()
-    return requests_left
+    return {'code': 200, 'data': requests_left}
 
 
 @app.route('/check-last-pin-status')
@@ -131,10 +148,33 @@ def check_last_pin_status():
 @app.route('/check-session-status')
 @login_required
 def check_session_status():
-    session_status = {
-        "status": session["status"],
-        "requests_left": session["req_left"]
-    }
+    session_status = dict()
+    if "job_id" in session:
+        job_key = session['job_id']
+        try:
+            job = Job.fetch(job_key, connection=conn)
+        except Exception:
+            session_status = {
+                "status": "No pending Job.",
+                "code": 404
+            }
+            return session_status
+
+        if job.is_finished:
+            session_status["status"] = "Last Job completed."
+            session_status["code"] = 200
+        elif job.is_failed:
+            session_status["status"] = "Last Job failed. Please enter new one."
+            session_status["code"] = 500
+        elif not job.is_finished:
+            session_status["status"] = "Not yet completed. Pinning..."
+            session_status["code"] = 202
+    else:
+        session_status = {
+            "status": "No pending Job.",
+            "code": 404
+        }
+
     return session_status
 
 
@@ -143,3 +183,40 @@ def check_session_status():
 # @roles_required('Admin')    # Use of @roles_required decorator
 # def admin_page():
 #     pass
+
+
+def save_pins(pins, source, destination, last_cursor, pa_token, current_user_id):
+    counter = 0
+    for pin in pins:
+        url = PINTEREST_API_BASE_URL + '/pins/?access_token=' + pa_token + "&fields=id"
+
+        post_data = {
+            "board": destination,
+            "note": pin["note"],
+            # "link": pin["link"],      Adding links is not feasible as these are
+            #                           Pinterest Links and Pinterest API doesn't
+            #                           allow adding them.
+            "image_url": pin["image"]["original"]["url"]
+        }
+
+        r = requests.post(url, data=post_data)
+
+        if r.status_code == 201:
+            counter = counter + 1
+
+            if counter == 100:
+                update_stats(counter, current_user_id)
+                update_pin_data(source, destination, counter, last_cursor, current_user_id)
+                counter = 0
+
+    del pins
+
+    update_stats(counter, current_user_id)
+    update_pin_data(source, destination, counter, last_cursor, current_user_id)
+
+    res = {
+        "last_cursor": last_cursor,
+        "pins_added": counter
+    }
+
+    return {"code": 200, "data": res}
