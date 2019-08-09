@@ -9,9 +9,8 @@ import requests
 from rq.job import Job
 from worker import conn
 import urllib.parse as urlparse
+import time
 
-persistent_data = dict()
-persistent_data['status'] = ""
 
 app = Flask(__name__)
 app.config.from_object(ConfigClass)
@@ -47,7 +46,6 @@ def home():
         'client_id': PINTEREST_CLIENT_ID,
         'redirect_uri': SITE_SCHEME + "://" + SITE_DOMAIN
     }
-    persistent_data['status'] = ""
 
     if 'pa-token' in session:
         return render_template('index.html', title='Home')
@@ -77,9 +75,6 @@ def pinterest_auth():
 @app.route('/pin-it')
 @login_required
 def pin_it():
-    persistent_data['status'] = ""
-    persistent_data['job_id'] = ""
-
     parsed = urlparse.urlparse(request.url)
     source = urlparse.parse_qs(parsed.query)['source'][0]
     destination = urlparse.parse_qs(parsed.query)['destination'][0]
@@ -114,6 +109,7 @@ def pin_it():
 @login_required
 def get_requests_left():
     res = save_profile_and_return_requests_left()
+    time.sleep(2)
     if res['code'] == 200:
         requests_left = res['data']
     elif res['code'] == 401:
