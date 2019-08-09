@@ -2,7 +2,7 @@ import os
 import requests
 import urllib.parse
 from flask_user import UserManager
-from flask import session
+from flask import session, abort
 from datetime import datetime
 from app import app, db
 from flask_user import current_user
@@ -72,6 +72,9 @@ def save_profile_and_return_requests_left():
     url = PINTEREST_API_BASE_URL + '/me?' + url_params
     r = requests.get(url, params)
     res = r.json()
+
+    print(res)
+
     res = res["data"]
 
     if not PinterestData.query.filter_by(user_id=current_user.id).first():
@@ -151,8 +154,10 @@ def update_stats(pin_added):
 
 
 def get_next_pins(source, num, cont, cursor):
-    remainder = int(num) % 100
-    remainder = remainder if int(num)/100 == 0 else (remainder + 1)
+    remainder = int(int(num) / 100)
+    remainder = remainder if int(int(num) % 100) == 0 else (remainder + 1)
+
+    print("Remainder = " + str(remainder))
 
     all_pins = []
 
@@ -184,7 +189,8 @@ def get_next_pins(source, num, cont, cursor):
                 params["cursor"] = ""
                 break
         else:
-            print(r.text)
+            print(r.json())
+            abort(500)
 
     response = {
         "all_pins": all_pins,

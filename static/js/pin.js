@@ -1,8 +1,6 @@
 var requests_left = 1000;
 var cont = false;
 var cursor = false;
-var t;
-var done = 0;
 
 $(document).ready(function() {
     getRequestsLeft();
@@ -36,12 +34,12 @@ function pinThem(event) {
         }
 
         $("#pin-button").attr("disabled", true);
-        updater();
+        $('#status').text("Pinning...");
 
         $.get("pin-it", {source: source_board, destination: destination_board, requests_left: requests_left, cont: cont, cursor: cursor}, function(result) {
             console.log(result);
             $("#pin-button").attr("disabled", false);
-            done = 1;
+            updater();
         });
     });
 }
@@ -76,16 +74,6 @@ function updater() {
             requests_left = data.requests_left;
             $('#status').text(status);
             $("#pins-left").text(requests_left);
-        },
-        complete: function() {
-            // Schedule the next request when the current one's complete
-            if (done == 1) {
-                clearTimeout(t);
-                console.log("Clear Timeout");
-                return;
-            }
-
-            t = setTimeout(updater, 4000);
         }
     });
 }
