@@ -26,7 +26,7 @@ function pinThem(event) {
 
     $.get('check-last-pin-status', {source: source_board, destination: destination_board},function (data) {
         console.log(data);
-        if (data.code == 200 & data.cursor != "") {
+        if (data.code == 200 && data.cursor != "") {
             cont = confirm("You have pinned " + data.pins_copied + " pins from this board. Do you want to continue with the next one? Press Cancel to restart.");
 
             console.log(cont);
@@ -72,14 +72,20 @@ function updater() {
         url: 'check-session-status',
         success: function(data) {
             console.log(data);
-            $('#status').text(data);
+            status = data.status;
+            requests_left = data.requests_left;
+            $('#status').text(status);
+            $("#pins-left").text(requests_left);
         },
         complete: function() {
             // Schedule the next request when the current one's complete
-            if (done == 1)
+            if (done == 1) {
                 clearTimeout(t);
+                console.log("Clear Timeout");
+                return;
+            }
 
-            t = setTimeout(updater, 2000);
+            t = setTimeout(updater, 4000);
         }
     });
 }

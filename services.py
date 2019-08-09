@@ -158,27 +158,43 @@ def get_next_pins(source, num, cont, cursor):
 
     params = {
         "access_token": session['pa-token'],
-        "limit": 2,
+        "limit": 100,
     }
     if cont == "true":
         params["cursor"] = cursor
 
-    for x in range(1):
+    for x in range(remainder):
         session['status'] = "Fetching Pins: " + str(x*100)
         url_params = urllib.parse.urlencode(params)
-        url = PINTEREST_API_BASE_URL + "/boards/{}/pins?{}&fields=id,link,url,note,image".format(source, url_params)
+        url = PINTEREST_API_BASE_URL + "/boards/{}/pins?{}&fields=note,image".format(source, url_params)
         r = requests.get(url)
+
+        print(url)
+
+        print(r.status_code)
 
         if r.status_code == 200:
             res = r.json()
             all_pins = all_pins + res["data"]
-            params["cursor"] = res["page"]["cursor"]
-            return all_pins
+
+            if res["page"]["cursor"] != None:
+                params["cursor"] = res["page"]["cursor"]
+            else:
+                # If requests left > number of pins in the source board
+                params["cursor"] = ""
+                break
         else:
-            raise Exception()
+            print(r.text)
+
+    response = {
+        "all_pins": all_pins,
+        "last_cursor": params["cursor"]
+    }
+
+    return response
 
 
-def save_pins(pins, destination):
+def save_pins(pins, destination, last_cursor):
     counter = 0
     for pin in pins:
         url = PINTEREST_API_BASE_URL + '/pins/?access_token=' + session['pa-token'] + "&fields=id"
@@ -194,16 +210,10 @@ def save_pins(pins, destination):
 
         r = requests.post(url, data=post_data)
 
-        if r.status_code != 201:
-            return False
-
-        counter = counter + 1
-        session['status'] = "Pins added: " + str(counter)
-
-    if "page" in pins[-1]:
-        last_cursor = pins[-1]["page"]["cursor"]
-    else:
-        last_cursor = ""
+        if r.status_code == 201:
+            counter = counter + 1
+            session["req_left"] = str(r.headers['X-RateLimit-Remaining'])
+            session["status"] = "Pins added: " + str(counter)
 
     del pins
 

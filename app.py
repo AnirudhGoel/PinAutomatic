@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, session, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, session, request, redirect, url_for, flash, jsonify, abort
 from flask_babelex import Babel
 from flask_sqlalchemy import SQLAlchemy
 from flask_user import current_user, login_required
@@ -64,6 +64,8 @@ def pinterest_auth():
 @app.route('/pin-it')
 @login_required
 def pin_it():
+    session['status'] = ""
+
     parsed = urlparse.urlparse(request.url)
     source = urlparse.parse_qs(parsed.query)['source'][0]
     destination = urlparse.parse_qs(parsed.query)['destination'][0]
@@ -71,8 +73,17 @@ def pin_it():
     cont = urlparse.parse_qs(parsed.query)['cont'][0]
     cursor = urlparse.parse_qs(parsed.query)['cursor'][0]
 
-    all_pins = get_next_pins(source, requests_left, cont, cursor)
-    res = save_pins(all_pins, destination)
+    try:
+        r = get_next_pins(source, requests_left, cont, cursor)
+        all_pins = r["all_pins"]
+        last_cursor = r["last_cursor"]
+    except:
+        abort(400)
+
+    try:
+        res = save_pins(all_pins, destination, last_cursor)
+    except:
+        abort(400)
 
     update_pin_data(source, destination, res["pins_added"], res["last_cursor"])
     update_stats(res["pins_added"])
@@ -88,6 +99,7 @@ def pin_it():
 @login_required
 def get_requests_left():
     requests_left = save_profile_and_return_requests_left()
+    session["req_left"] = requests_left
     return requests_left
 
 
@@ -115,7 +127,11 @@ def check_last_pin_status():
 @app.route('/check-session-status')
 @login_required
 def check_session_status():
-    return session['status']
+    session_status = {
+        "status": session["status"],
+        "requests_left": session["req_left"]
+    }
+    return session_status
 
 
 # # The Admin page requires an 'Admin' role.

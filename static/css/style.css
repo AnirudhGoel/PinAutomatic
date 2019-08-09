@@ -17,7 +17,7 @@ body {
 
 .intro-image {
 	margin-top: 30px;
-	margin-bottom: 80px;
+	margin-bottom: 40px;
 }
 
 h1 {
@@ -30,7 +30,7 @@ h1 {
 }
 
 .btn-danger, .btn-warning {
-	margin-top: 3em;
+	margin-top: 2em;
 }
 
 .title {
@@ -44,6 +44,16 @@ h1 {
 }
 .status-box {
 	background-color: rgba(211, 84, 0, 0.2);
+	width: 80%;
+	border-radius: 5px;
+	min-height: 5em;
+	text-align: left;
+	padding: 10px 10px 10px 10px;
+}
+
+.status-box, .text {
+	font-weight: bold;
+	font-size: 1.2em;
 }
 
 #err1, #err2, #err {
@@ -62,8 +72,8 @@ h1 {
 
 @media only screen and (min-width: 450px) {
 	.container {
-		width: 400px;
-		margin-top: 10vh;
+		width: 500px;
+		margin-top: 5vh;
 	}
 	h1 {
 		font-size: 20px !important;
