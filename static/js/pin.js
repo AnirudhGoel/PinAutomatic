@@ -43,6 +43,8 @@ function pinThem(event) {
 
         $.get("pin-it", {source: source_board, destination: destination_board, requests_left: requests_left, cont: cont, cursor: cursor}, function(result) {
             console.log(result);
+            if (result.code == 401)
+                window.location.href = result.data;
             updater();
         });
     });

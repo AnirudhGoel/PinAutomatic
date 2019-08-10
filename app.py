@@ -11,7 +11,6 @@ from worker import conn
 import urllib.parse as urlparse
 import time
 
-
 app = Flask(__name__)
 app.config.from_object(ConfigClass)
 
@@ -20,6 +19,7 @@ q = Queue(connection=conn, default_timeout=1200)
 db = SQLAlchemy(app)
 babel = Babel(app)
 from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip
+from models import User
 
 # Create all database tables and create admin
 # db.create_all()
@@ -75,6 +75,8 @@ def pinterest_auth():
 @app.route('/pin-it')
 @login_required
 def pin_it():
+    if not check_user_active():
+        return jsonify({"code": 401, "data": "/user/sign-out"})
     parsed = urlparse.urlparse(request.url)
     source = urlparse.parse_qs(parsed.query)['source'][0]
     destination = urlparse.parse_qs(parsed.query)['destination'][0]
@@ -216,3 +218,25 @@ def save_pins(pins, source, destination, last_cursor, pa_token, current_user_id)
     }
 
     return {"code": 200, "data": res}
+
+
+@app.route('/toggle-user-active/<user_id>')
+def toggle_user_active(user_id):
+    user_instance = User.query.filter_by(id=user_id).first()
+    if user_instance.active:
+        user_instance.active = False
+        flag = "INACTIVE"
+    else:
+        user_instance.active = True
+        flag = "ACTIVE"
+
+    db.session.commit()
+    return jsonify({"code": 200, "message": str(user_instance.email) + " has been marked active " + str(flag)})
+
+
+def check_user_active():
+    user_instance = User.query.filter_by(id=current_user.id).first()
+    if user_instance.active:
+        return True
+    else:
+        return False
