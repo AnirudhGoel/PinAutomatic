@@ -1,9 +1,7 @@
-@import 'https://fonts.googleapis.com/css?family=Josefin+Sans:300';
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300&display=swap');
 body {
-	/*background-color: rgba(211, 84, 0, 0.2);*/
 	background-color: white;
-	/*font-family: 'Josefin Sans', sans-serif !important;*/
-	font-family: 'Brandon Text', sans-serif;
+	font-family: 'Brandon Text', 'Open Sans', sans-serif;
 	font-weight: 300;
 }
 
@@ -43,6 +41,7 @@ h1 {
 .input-box {
 	margin-bottom: 2.4em;
 }
+
 .status-box {
 	background-color: rgba(211, 84, 0, 0.2);
 	width: 80%;
@@ -71,6 +70,18 @@ h1 {
 	font-size: 17px;
 }
 
+.pull-right {
+	position: absolute;
+	z-index: 9999;
+	top: 35px;
+	right: 35px;
+	font-size: 1.2em;
+}
+
+.pull-right a {
+	color: #888888;
+}
+
 @media only screen and (min-width: 450px) {
 	.container {
 		width: 500px;
@@ -97,5 +108,12 @@ h1 {
 	}
 	.intro-image {
 		margin-bottom: 15px;
+	}
+	.pull-right {
+		position: absolute;
+		z-index: 9999;
+		top: 25px;
+		right: 35px;
+		font-size: 1.2em;
 	}
 }

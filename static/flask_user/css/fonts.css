@@ -1,0 +1,34 @@
+@font-face {
+  font-family: 'BrandonText-Thin';
+  src: url('../fonts/BrandonText-Thin.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BrandonText-Bold';
+  src: url('../fonts/BrandonText-Bold.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BrandonText-RegularItalic';
+  src: url('../fonts/BrandonText-RegularItalic.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BrandonText-Regular';
+  src: url('../fonts/BrandonText-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'BrandonText-Light';
+  src: url('../fonts/BrandonText-Light.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}

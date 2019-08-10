@@ -38,6 +38,9 @@
         <div class="intro-image">
             <img src="{{ url_for('static', filename='img/pinterest.png') }}" style="width: 530px; padding-top: 30px;" class="img-responsive">
         </div>
+        <div class="pull-right">
+            <a href="{{ url_for('user.logout') }}">{%trans%}Sign out{%endtrans%}</a>
+        </div>
 
         {% block content %}{% endblock %}
     </div>
