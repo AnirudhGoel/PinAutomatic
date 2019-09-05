@@ -38,11 +38,17 @@
         <div class="intro-image">
             <img src="{{ url_for('static', filename='img/pinterest.png') }}" style="width: 530px; padding-top: 30px;" class="img-responsive">
         </div>
-        <div class="pull-right">
-            <a href="{{ url_for('user.logout') }}">{%trans%}Sign out{%endtrans%}</a>
-        </div>
 
         {% block content %}{% endblock %}
+
+        <div class="col-xs-5 sign-out">
+            <a href="{{ url_for('user.logout') }}">{%trans%}Sign out{%endtrans%}</a>
+        </div>
+        <div class="col-xs-7 contact-dev">
+            <a href="https://anirudhgoel.me" target="_blank">{%trans%}Contact Developer{%endtrans%}</a>
+        </div>
+        <br>
+
         <a target="_blank" href="https://docs.google.com/forms/d/e/1FAIpQLSemfz-KVdec0O6FaVBwTW6TB0_rfNQ9VOLfbJ20goPrJHwgaw/viewform?usp=sf_link">Please take this short survey to help improving the app</a>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

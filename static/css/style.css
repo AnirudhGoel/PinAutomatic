@@ -70,15 +70,13 @@ h1 {
 	font-size: 17px;
 }
 
-.pull-right {
-	position: absolute;
-	z-index: 9999;
-	top: 35px;
-	right: 35px;
+.sign-out, .contact-dev {
+	padding-top: 20px;
+	padding-bottom: 20px;
 	font-size: 1.2em;
 }
 
-.pull-right a {
+.sign-out a, .contact-dev a {
 	color: #888888;
 }
 
