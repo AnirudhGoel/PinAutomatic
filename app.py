@@ -185,15 +185,18 @@ def check_session_status():
 
 def save_pins(pins, source, destination, last_cursor, pa_token, current_user_id):
     counter = 0
+    note_append = " | This pin was added using PinterestAutomatic."
+
     for pin in pins:
         url = PINTEREST_API_BASE_URL + '/pins/?access_token=' + pa_token + "&fields=id"
 
         post_data = {
             "board": destination,
-            "note": pin["note"],
-            # "link": pin["link"],      Adding links is not feasible as these are
-            #                           Pinterest Links and Pinterest API doesn't
-            #                           allow adding them.
+            "note": str(pin["note"]) + note_append,
+            "link": "https://pinterestautomatic.herokuapp.com",
+            # Adding links is not feasible as these are
+            # Pinterest Links and Pinterest API doesn't
+            # allow adding them. Till then adding own link.
             "image_url": pin["image"]["original"]["url"]
         }
 
