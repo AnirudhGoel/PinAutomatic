@@ -39,6 +39,11 @@ def index():
         return redirect('/user/sign-in')
 
 
+@app.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
+
 @app.route('/home')
 @login_required
 def home():

@@ -70,13 +70,13 @@ h1 {
 	font-size: 17px;
 }
 
-.sign-out, .contact-dev {
+.sign-out, .contact-dev, .privacy-policy {
 	padding-top: 20px;
 	padding-bottom: 20px;
 	font-size: 1.2em;
 }
 
-.sign-out a, .contact-dev a {
+.sign-out a, .contact-dev a, .privacy-policy a {
 	color: #888888;
 }
 
