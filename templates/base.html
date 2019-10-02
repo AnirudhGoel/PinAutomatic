@@ -25,12 +25,12 @@
     <meta name="author" content="Anirudh Goel" />
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="icon" href="https://s-passets-cache-ak0.pinimg.com/webapp/style/app/common/images/favicon-57a225b2.png">
+    <link rel="icon" href="{{ url_for('static', filename='img/icon.png') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
 
     {% block head %}{% endblock %}
 
-    <title>Pinterest Automatic</title>
+    <title>Pin Automatic</title>
 </head>
 <body>
     <div class="container" align="center">

@@ -28,7 +28,7 @@ from models import User
 PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID", default="4844984301336407368")
 PINTEREST_API_BASE_URL = os.environ.get("PINTEREST_API_BASE_URL")
 SITE_SCHEME = os.environ.get("SITE_SCHEME", default="https")
-SITE_DOMAIN = os.environ.get("SITE_DOMAIN", default="pinterestautomatic.herokuapp.com")
+SITE_DOMAIN = os.environ.get("SITE_DOMAIN", default="pinautomatic.herokuapp.com")
 
 
 @app.route('/')
@@ -71,7 +71,7 @@ def pinterest_auth():
 
             return redirect(url_for('index'))
         else:
-            flash("You need to provide authorization to PinterestAutomatic to allow adding of pins to your board.", category='error')
+            flash("You need to provide authorization to PinAutomatic to allow adding of pins to your board.", category='error')
             return redirect(url_for('home'))
     else:
         return redirect('/user/sign-out')
@@ -197,7 +197,7 @@ def save_pins(pins, source, destination, last_cursor, pa_token, current_user_id)
         post_data = {
             "board": destination,
             "note": str(pin["note"]),
-            # "link": "https://pinterestautomatic.herokuapp.com",
+            # "link": "https://pinautomatic.herokuapp.com",
             # Adding links is not feasible as these are
             # Pinterest Links and Pinterest API doesn't
             # allow adding them. Till then adding own link.

@@ -1,5 +1,5 @@
-![PinterestAutomatic Logo](static/img/pinterest.png)
-# Pinterest Automatic
+![PinAutomatic Logo](static/img/pinterest.png)
+# Pin Automatic
 #### A webapp to Pin all images of one Pinterest Board to another
 Pinning pins from someone's board to yours individually is so tiring. So, I made a webapp to do this boring work !
 
