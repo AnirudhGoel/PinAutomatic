@@ -7,7 +7,7 @@ body {
 .outer-box {
 	width: 90%;
 	background-color: #F7EEF8;
-	padding: 10px 10px 2em 10px;
+	padding: 10px 0px 0px 0px;
 	border-radius: 10px;
 	margin-top: 25px;
 	margin-bottom: 25px;
@@ -21,6 +21,47 @@ body {
 }
 .btn-default {
 	margin-top: 1.5em;
+}
+.footer {
+	background-color: #452533;
+	border-radius: 10px;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	padding-top: 3em;
+	margin-top: 5em;
+}
+.footer a {
+	color: white;
+}
+.bmc-button img {
+	width: 20px;
+	margin-bottom: 1px;
+	box-shadow: none;
+	border: none;
+	vertical-align: middle;
+}
+.bmc-button{
+	padding: 7px 10px 7px 15px;
+	line-height: 35px !important;
+	text-decoration: none !important;
+	display:inline-flex !important;
+	color:#ffffff !important;
+	background-color:#FF813F !important;
+	border-radius: 5px !important;
+	border: 1px solid transparent !important;
+	font-size: 1.2em !important;
+	letter-spacing: 0.6px !important;
+	box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;
+	-webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;
+	margin-bottom: 50px;
+	font-family:'Cookie', cursive !important;
+	-webkit-box-sizing: border-box !important;
+	box-sizing: border-box !important;
+	-o-transition: 0.3s all linear !important;
+	-webkit-transition: 0.3s all linear !important;
+	-moz-transition: 0.3s all linear !important;
+	-ms-transition: 0.3s all linear !important;
+	transition: 0.3s all linear !important;
 }
 @media only screen and (min-width: 450px) {
 	.container {
