@@ -4,7 +4,6 @@ body {
 	font-family: 'Brandon Text', 'Open Sans', sans-serif;
 	font-weight: 300;
 }
-
 .container {
 	width: 90%;
 	background-color: #F7EEF8;
@@ -13,35 +12,27 @@ body {
 	margin-top: 25px;
 	margin-bottom: 25px;
 }
-
 .intro-image {
 	margin-top: 15px;
-	margin-bottom: 40px;
 }
-
 h1 {
 	font-size: 25px !important;
 	display: inline;
 }
-
 .input-area {
 	padding-top: 10px;
 }
-
 .btn-danger, .btn-warning {
 	margin-top: 2em;
 }
-
 .title {
 	margin-bottom: 0.5em;
 	font-size: 1.8em;
 	font-weight: bolder;
 }
-
 .input-box {
 	margin-bottom: 2.4em;
 }
-
 .status-box {
 	background-color: rgba(211, 84, 0, 0.2);
 	width: 80%;
@@ -50,36 +41,29 @@ h1 {
 	text-align: left;
 	padding: 10px 10px 10px 10px;
 }
-
 .status-box, .text {
 	font-weight: bold;
 	font-size: 1.2em;
 }
-
 #err1, #err2, #err {
 	color: red;
 	font-size: 18px;
 }
-
 #response {
 	color: red;
 }
-
 .modal-body {
 	text-align: left;
 	font-size: 17px;
 }
-
 .sign-out, .contact-dev, .privacy-policy {
 	padding-top: 20px;
 	padding-bottom: 20px;
 	font-size: 1.2em;
 }
-
 .sign-out a, .contact-dev a, .privacy-policy a {
 	color: #888888;
 }
-
 .footer {
 	background-color: #452533;
 	border-radius: 10px;
@@ -121,7 +105,14 @@ h1 {
 	-ms-transition: 0.3s all linear !important;
 	transition: 0.3s all linear !important;
 }
-
+.intro-text {
+	margin-bottom: 30px;
+	font-size: 1.1em;
+	padding: 0 20px 0 20px;
+}
+.card {
+	padding: 0 30px 0 30px;
+}
 @media only screen and (min-width: 450px) {
 	.container {
 		width: 500px;
@@ -146,14 +137,14 @@ h1 {
 	.btn-danger, .btn-warning {
 		margin-top: 60px;
 	}
-	.intro-image {
-		margin-bottom: 15px;
-	}
 	.pull-right {
 		position: absolute;
 		z-index: 9999;
 		top: 25px;
 		right: 35px;
 		font-size: 1.2em;
+	}
+	.intro-text {
+		padding: 0 50px 0 50px;
 	}
 }

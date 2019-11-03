@@ -14,7 +14,6 @@ body {
 }
 .intro-image {
 	margin-top: 15px;
-	margin-bottom: 40px;
 }
 .form {
 	padding-top: 2em;
@@ -63,13 +62,24 @@ body {
 	-ms-transition: 0.3s all linear !important;
 	transition: 0.3s all linear !important;
 }
+label {
+	font-weight: 300;
+}
+.intro-text {
+	margin-bottom: 30px;
+	font-size: 1.1em;
+	padding: 0 20px 0 20px;
+}
+.card {
+	padding: 0 30px 0 30px;
+}
 @media only screen and (min-width: 450px) {
 	.container {
 		width: 500px;
 		margin-top: 5vh;
 		margin-bottom: 5vh;
 	}
-	.intro-image {
-		margin-bottom: 15px;
+	.intro-text {
+		padding: 0 50px 0 50px;
 	}
 }
