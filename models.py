@@ -43,7 +43,7 @@ class Token(db.Model):
     __tablename__ = 'tokens'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    token = db.Column(db.String(100), unique=True, nullable=False, default="")
+    token = db.Column(db.String(256), unique=True, nullable=False, default="")
 
 
 class Stats(db.Model):
@@ -70,8 +70,7 @@ class PinterestData(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
     pinterest_id = db.Column(db.BigInteger())
     username = db.Column(db.String(300), nullable=False, default="")
-    first_name = db.Column(db.String(300), nullable=False, default="")
-    last_name = db.Column(db.String(300), nullable=False, default="")
+    full_name = db.Column(db.String(300), nullable=False, default="")
     pins = db.Column(db.Integer())
     boards = db.Column(db.Integer())
     following = db.Column(db.Integer())

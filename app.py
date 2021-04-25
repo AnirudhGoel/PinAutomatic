@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, session, request, redirect, url_for, flash, jsonify, abort
 from flask_babelex import Babel
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_user import current_user, login_required
 from config import ConfigClass
 from rq import Queue
@@ -10,6 +11,7 @@ from rq.job import Job
 from worker import conn
 import urllib.parse as urlparse
 import time
+import hashlib
 
 app = Flask(__name__)
 app.config.from_object(ConfigClass)
@@ -17,6 +19,7 @@ app.config.from_object(ConfigClass)
 q = Queue(connection=conn, default_timeout=1200)
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 babel = Babel(app)
 from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip
 from models import User
@@ -25,7 +28,7 @@ from models import User
 # db.create_all()
 # create_admin_if_not_exists()
 
-PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID", default="4844984301336407368")
+PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID")
 PINTEREST_API_BASE_URL = os.environ.get("PINTEREST_API_BASE_URL")
 SITE_SCHEME = os.environ.get("SITE_SCHEME", default="https")
 SITE_DOMAIN = os.environ.get("SITE_DOMAIN", default="pinautomatic.herokuapp.com")
@@ -49,22 +52,27 @@ def privacy_policy():
 def home():
     credentials = {
         'client_id': PINTEREST_CLIENT_ID,
-        'redirect_uri': SITE_SCHEME + "://" + SITE_DOMAIN
+        'redirect_uri': SITE_SCHEME + "://" + SITE_DOMAIN,
+        'state': hashlib.sha256(os.urandom(1024)).hexdigest()
     }
+    session['state'] = credentials['state']
 
-    if 'pa-token' in session:
-        return render_template('index.html', title='Home')
-    else:
-        return render_template('authorize.html', title='Login', credentials=credentials)
+    # if 'pa-token' in session:
+    return render_template('index.html', title='Home')
+    # else:
+    #     return render_template('authorize.html', title='Login', credentials=credentials)
 
 
 @app.route('/pinterest-auth')
 @login_required
 def pinterest_auth():
-    if request.args.get('state', None) == "secret":
+    if request.args.get('state', None) == session['state']:
         if request.args.get('code', None):
             temp_code = request.args.get('code', None)
-            access_token = get_token(temp_code)
+
+            # As per new API docs, this redirect_uri just needs to be passed. Should be one from the authorized redirect_uris
+            redirect_uri = SITE_SCHEME + "://" + SITE_DOMAIN + '/pinterest-auth'
+            access_token = get_token(temp_code, redirect_uri)
             save_token_to_database(access_token)
 
             session['pa-token'] = access_token
@@ -82,6 +90,10 @@ def pinterest_auth():
 def pin_it():
     if not check_user_active():
         return jsonify({"code": 401, "data": "/user/sign-out"})
+
+    print(request.form)
+    return
+
     parsed = urlparse.urlparse(request.url)
     source = urlparse.parse_qs(parsed.query)['source'][0]
     destination = urlparse.parse_qs(parsed.query)['destination'][0]
@@ -106,7 +118,7 @@ def pin_it():
         abort(400)
 
     response = {
-        "data": "Pins(s) will be added.",
+        "data": "Pin(s) will be added.",
         "code": 200
     }
     return jsonify(response)

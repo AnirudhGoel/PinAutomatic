@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="card">
-    <a href="https://api.pinterest.com/oauth/?response_type=code&redirect_uri={{ credentials.redirect_uri }}/pinterest-auth&client_id={{ credentials.client_id }}&scope=read_public,write_public&state=secret"><img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Login Button" id="login-button"></a>
+    <a href="https://www.pinterest.com/oauth/?response_type=code&redirect_uri={{ credentials.redirect_uri }}/pinterest-auth&client_id={{ credentials.client_id }}&state={{ credentials.state }}"><img src="{{ url_for('static', filename='img/login.jpg') }}" alt="Login Button" id="login-button"></a>
     <div class="message">
         Authorize <strong>PinAutomatic</strong> to access your Pinterest Account to allow adding of Pins to your boards.
     </div>

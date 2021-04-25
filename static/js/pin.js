@@ -17,18 +17,22 @@ function pinThem(event) {
 	var err1 = $("#err1");
 	var err2 = $("#err2");
 
-	var source_board = extractBoard($("#source_board").val());
-	var destination_board = extractBoard($("#destination_board").val());
+	var sourceBoard = extractBoard($("#sourceBoard").val());
+	var destinationBoard = extractBoard($("#destinationBoard").val());
+	var pinLink = $("#pin_link").val();
+	var note = $("#note").val();
 
-	if (source_board == false) {
+	if (sourceBoard == false) {
 	    err1.html("Enter a valid source board");
         return;
-	} else if (destination_board == false) {
+	} else if (destinationBoard == false) {
 	    err2.html("Enter a valid destination board");
         return;
     }
 
-    $.get('check-last-pin-status', {source: source_board, destination: destination_board},function (data) {
+    $("#pin-button").attr("disabled", true);
+
+    $.get('check-last-pin-status', {source: sourceBoard, destination: destinationBoard},function (data) {
         console.log(data);
         if (data.code == 200 && data.cursor != "") {
             cont = confirm("You have pinned " + data.pins_copied + " pins from this board. Do you want to continue with the next one? Press Cancel to restart.");
@@ -39,9 +43,7 @@ function pinThem(event) {
                 cursor = data.cursor;
         }
 
-        $("#pin-button").attr("disabled", true);
-
-        $.get("pin-it", {source: source_board, destination: destination_board, requests_left: requests_left, cont: cont, cursor: cursor}, function(result) {
+        $.post("pin-it", {source: sourceBoard, destination: destinationBoard, requests_left: requests_left, cont: cont, cursor: cursor, pin_link: pinLink, note: note}, function(result) {
             console.log(result);
             if (result.code == 401)
                 window.location.href = result.data;

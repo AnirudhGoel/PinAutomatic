@@ -113,6 +113,11 @@ h1 {
 .card {
 	padding: 0 30px 0 30px;
 }
+.input-lg, textarea {
+	width: 75%;
+}
+
+
 @media only screen and (min-width: 450px) {
 	.container {
 		width: 500px;

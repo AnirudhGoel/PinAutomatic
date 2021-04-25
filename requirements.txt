@@ -1,4 +1,4 @@
-alembic==1.0.11
+alembic==1.5.8
 asn1crypto==0.24.0
 Babel==2.7.0
 bcrypt==3.1.7

@@ -17,18 +17,20 @@ PINTEREST_API_BASE_URL = os.environ.get("PINTEREST_API_BASE_URL")
 PINTEREST_CLIENT_SECRET = os.environ.get("PINTEREST_CLIENT_SECRET")
 
 
-def get_token(temp_code):
-    params = {
+def get_token(temp_code, redirect_uri):
+    data = {
         "grant_type": "authorization_code",
         "client_id": PINTEREST_CLIENT_ID,
         "client_secret": PINTEREST_CLIENT_SECRET,
-        "code": temp_code
+        "code": temp_code,
+        "redirect_uri": redirect_uri
     }
 
-    url_params = urllib.parse.urlencode(params)
-    token_url = PINTEREST_API_BASE_URL + "/oauth/token?" + url_params
-    r = requests.post(token_url)
+    # url_params = urllib.parse.urlencode(params)
+    token_url = PINTEREST_API_BASE_URL + "/oauth/access_token"
+    r = requests.post(token_url, data=data)
     response = r.json()
+    print(response)
     access_token = response["access_token"]
 
     return access_token
@@ -50,16 +52,23 @@ def save_token_to_database(token):
 
 
 def save_profile_and_return_requests_left():
-    params = {
-        "access_token": session['pa-token'],
-        "fields": "id,username,first_name,last_name,counts"
+    # params = {
+    #     "access_token": session['pa-token'],
+    #     "fields": "id,username,first_name,last_name,counts"
+    # }
+
+    headers = {
+        "Authorization": f"Bearer {session['pa-token']}"
     }
 
-    url_params = urllib.parse.urlencode(params)
-    url = PINTEREST_API_BASE_URL + '/me?' + url_params
-    r = requests.get(url, params)
+    # url_params = urllib.parse.urlencode(params)
+    url = PINTEREST_API_BASE_URL + '/users/me'
+    r = requests.get(url, headers=headers)
     if r.status_code == 200:
         res = r.json()
+
+        print(res)
+
         res = res["data"]
 
         if not PinterestData.query.filter_by(user_id=current_user.id).first():
@@ -67,24 +76,25 @@ def save_profile_and_return_requests_left():
                 user_id=current_user.id,
                 pinterest_id=res["id"],
                 username=res["username"],
-                first_name=res["first_name"],
-                last_name=res["last_name"],
-                pins=res["counts"]["pins"],
-                boards=res["counts"]["boards"],
-                followers=res["counts"]["followers"],
-                following=res["counts"]["following"],
+                full_name=res["full_name"],
+                pins=res["pin_count"],
+                boards=res["board_count"],
+                followers=res["follower_count"],
+                following=res["following_count"],
             )
             db.session.add(pinterest_data)
         else:
             pinterest_data_instance = PinterestData.query.filter_by(user_id=current_user.id).first()
             pinterest_data_instance.username = res["username"]
-            pinterest_data_instance.pins = res["counts"]["pins"]
-            pinterest_data_instance.boards = res["counts"]["boards"]
-            pinterest_data_instance.followers = res["counts"]["followers"]
-            pinterest_data_instance.following = res["counts"]["following"]
+            pinterest_data_instance.full_name = res["full_name"]
+            pinterest_data_instance.pins = res["pin_count"]
+            pinterest_data_instance.boards = res["board_count"]
+            pinterest_data_instance.followers = res["follower_count"]
+            pinterest_data_instance.following = res["following_count"]
 
         db.session.commit()
-        return {"data": r.headers['X-RateLimit-Remaining'], "code": 200}
+
+        return {"data": r.headers['x-userendpoint-ratelimit-remaining'], "code": 200}
     elif r.status_code == 401:
         return {"data": "Access token invalid.", "code": 401}
 
