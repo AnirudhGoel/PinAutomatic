@@ -1,13 +1,14 @@
+import math
 import os
-import requests
 import urllib.parse
-from flask_user import UserManager
-from flask import session, abort, request
 from datetime import datetime
-from app import app, db
-from flask_user import current_user
 
-from models import User, Token, PinterestData, PinData, Stats, IPDetails
+import requests
+from flask import abort, request, session
+from flask_user import UserManager, current_user
+
+from app import app, db
+from models import IPDetails, PinData, PinterestData, Stats, Token, User
 
 # Setup Flask-User and specify the User data-model
 user_manager = UserManager(app, db, User)
@@ -52,16 +53,10 @@ def save_token_to_database(token):
 
 
 def save_profile_and_return_requests_left():
-    # params = {
-    #     "access_token": session['pa-token'],
-    #     "fields": "id,username,first_name,last_name,counts"
-    # }
-
     headers = {
         "Authorization": f"Bearer {session['pa-token']}"
     }
 
-    # url_params = urllib.parse.urlencode(params)
     url = PINTEREST_API_BASE_URL + '/users/me'
     r = requests.get(url, headers=headers)
     if r.status_code == 200:
@@ -163,30 +158,36 @@ def update_stats(pin_added, current_user_id):
     return True
 
 
-def get_next_pins(source, num, cont, cursor):
-    remainder = int(int(num) / 100)
-    remainder = remainder if int(int(num) % 100) == 0 else (remainder + 1)
+def get_next_pins(source, req_left, cont, cursor):
+    remainder = math.ceil(int(req_left)/250)  #250 is max page_size with v3
 
     print("Remainder = " + str(remainder))
 
     all_pins = []
 
     params = {
-        "access_token": session['pa-token'],
-        "limit": 100,
+        "page_size": 250,
+        "filter_section_pins": False,
+        "filter_stories": True
     }
     if cont == "true":
-        params["cursor"] = cursor
+        params["bookmark"] = cursor
+
+    headers = {
+        "Authorization": f"Bearer {session['pa-token']}"
+    }
 
     for x in range(remainder):
-        session['status'] = "Fetching Pins: " + str(x*100)
+        session['status'] = "Fetching Pins: " + str((x + 1) * 250)
         url_params = urllib.parse.urlencode(params)
-        url = PINTEREST_API_BASE_URL + "/boards/{}/pins?{}&fields=note,image".format(source, url_params)
-        r = requests.get(url)
+        url = PINTEREST_API_BASE_URL + f"/boards/{source}/pins"
+        r = requests.get(url, params=url_params, headers=headers)
 
         print(url)
 
-        print(r.status_code)
+        print(r.json())
+
+        abort(500)
 
         if r.status_code == 200:
             res = r.json()
