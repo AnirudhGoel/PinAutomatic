@@ -7,7 +7,7 @@ certifi==2019.6.16
 cffi==1.12.3
 chardet==3.0.4
 Click==7.0
-cryptography==2.7
+cryptography==3.2
 Flask==1.1.1
 Flask-BabelEx==0.9.3
 Flask-Login==0.4.1
