@@ -1,6 +1,7 @@
 var requestsLeft = 0;
 var cont = false;
 var cursor = false;
+var bookmark = null;
 var t;
 var done = 0;
 
@@ -11,37 +12,37 @@ $(document).ready(function() {
 
 function pinThem(event) {
 	event.preventDefault();
+	$("#pin-button").attr("disabled", true);
 
 	done = 0;
-
 	var err1 = $("#err1");
 	var err2 = $("#err2");
 
-	var sourceBoard = extractBoard($("#source_board").val());
+	// var sourceBoard = extractBoard($("#source_board").val());
+	var sourceURL = isValidUrl($("#source_url").val().trim());
 	var destinationBoard = extractBoard($("#destination_board").val());
 
 	var pinLink = $("#pin_link").val() ? $("#pin_link").val() != false : null;
 	var description = $("#description").val() ? $("#description").val() : null;
 
-	if (sourceBoard == false) {
-		err1.html("Enter a valid source board");
+	if (sourceURL == false) {
+		err1.html("Enter a valid source URL");
+		$("#pin-button").attr("disabled", false);
 		return;
 	} else if (destinationBoard == false) {
 		err2.html("Enter a valid destination board");
+		$("#pin-button").attr("disabled", false);
 		return;
 	}
 
-	$("#pin-button").attr("disabled", true);
-
-	$.get('check-last-pin-status', {source: sourceBoard, destination: destinationBoard},function (data) {
+	$.get('check-last-pin-status', {source: sourceURL, destination: destinationBoard},function (data) {
 		console.log(data);
-		if (data.code == 200 && data.cursor != "") {
-			cont = confirm("You have pinned " + data.pins_copied + " pins from this board. Do you want to continue with the next one? Press Cancel to restart.");
+		if (data.code == 200 && data.pins_copied != "") {
+			cont = confirm("You have pinned " + data.pins_copied + " pins from this URL. Do you want to continue with the next one? Press Cancel to restart.");
 
 			console.log(cont);
 
-			if (cont)
-				cursor = data.cursor;
+			bookmark = data.pins_copied
 		}
 
 		$.post("pin-it", {source: sourceBoard, destination: destinationBoard, requests_left: requestsLeft, cont: cont, cursor: cursor, pin_link: pinLink, description: description}, function(result) {
@@ -82,6 +83,17 @@ function getRequestsLeft() {
 			$("#pins-left").text(requestsLeft);
 		}
 	});
+}
+
+function isValidUrl(url) {
+	var expression = /[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)?/gi;
+	var regex = new RegExp(expression);
+
+	if (url.match(regex)) {
+		return url
+	} else {
+		return false
+	}
 }
 
 function updater() {

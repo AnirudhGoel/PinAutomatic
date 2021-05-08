@@ -21,7 +21,7 @@ q = Queue(connection=conn, default_timeout=1200)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
-from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip
+from services import get_token, save_token_to_database, get_next_pins, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip, get_images
 from models import User
 
 # Create all database tables and create admin
@@ -92,20 +92,21 @@ def pin_it():
         return jsonify({"code": 401, "data": "/user/sign-out"})
 
     data = request.form.to_dict(flat=False)
+    source_url = data['source'][0]
     requests_left = data['requests_left'][0]
-    cont = data['cont'][0]
-    cursor = data['cursor'][0]
-    pin_link = None
-    description = None
+    cont = bool(data['cont'][0])
+    bookmark = None
+    pin_link = 'https://pinautomatic.herokuapp.com'
+    description = 'This Pin has been added auto-magically by the PinAutomatic app. Click on the Pin to go to PinAutomatic.'
     
     if data['pin_link'][0]:
         pin_link = data['pin_link'][0]
 
     if data['description'][0]:
-        description = (data['description'][0][:498] + '..') if len(data) > 500 else description
+        description = (data['description'][0][:498] + '..') if len(data['description'][0]) > 500 else description
 
-    source_board_slug = data['source'][0]
-    source = get_board_id(source_board_slug)
+    if data['bookmark'][0]:
+        bookmark = int(data['bookmark'][0])
 
     destination_board_slug = data['destination'][0]
     destination = get_board_id(destination_board_slug)
@@ -113,13 +114,12 @@ def pin_it():
     pa_token = session['pa-token']
 
     try:
-        r = get_next_pins(source, requests_left, cont, cursor)
-        all_pins = r["all_pins"]
-        last_cursor = r["last_cursor"]
+        # r = get_next_pins(source, requests_left, cont, cursor)
+        all_images = get_images(source_url, requests_left, cont, bookmark)
 
-        if all_pins == []:
+        if not all_images:
             response = {
-                "data": "No Pins to Pin. Requests exhausted or Board empty?",
+                "data": "No Images to Pin. URL has no images? Or all images on this page have been pinned, please try again with continue = False.",
                 "code": 204
             }
             return jsonify(response)
@@ -128,7 +128,7 @@ def pin_it():
 
     try:
         job = q.enqueue_call(
-            func=save_pins, args=(all_pins, source, destination, last_cursor, pa_token, current_user.id, pin_link, description), result_ttl=1200
+            func=save_pins, args=(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description), result_ttl=1200
         )
         session['job_id'] = job.get_id()
     except:
@@ -170,8 +170,7 @@ def check_last_pin_status():
     if last_pin_details:
         res = {
             "code": 200,
-            "pins_copied": last_pin_details['pins_copied'],
-            "cursor": last_pin_details['cursor']
+            "pins_copied": last_pin_details['pins_copied']
         }
 
     return res
@@ -217,20 +216,21 @@ def check_session_status():
 #     pass
 
 
-def save_pins(pins, source, destination, last_cursor, pa_token, current_user_id, pin_link=None, description=None):
+def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, current_user_id, pin_link, description):
     counter = 0
+    start_index = bookmark + 1 if cont is True else 0
 
-    for pin in pins:
+    for i in range(start_index, len(pins)):
         url = PINTEREST_API_BASE_URL + '/pins'
 
         put_data = {
             "board": destination,
-            "note": str(pin["note"]),
-            # "link": "https://pinautomatic.herokuapp.com",
+            "note": description,
+            "link": pin_link,
             # Adding links is not feasible as these are
             # Pinterest Links and Pinterest API doesn't
             # allow adding them. Till then adding own link.
-            "image_url": pin["image"]["original"]["url"]
+            "image_url": pins[i]
         }
 
         r = requests.post(url, data=put_data)
@@ -238,18 +238,17 @@ def save_pins(pins, source, destination, last_cursor, pa_token, current_user_id,
         if r.status_code == 201:
             counter = counter + 1
 
-            if counter == 100:
+            if counter % 100 == 0:
                 update_stats(counter, current_user_id)
-                update_pin_data(source, destination, counter, last_cursor, current_user_id)
-                counter = 0
+                update_pin_data(source, destination, counter, bookmark, current_user_id)
 
     del pins
 
     update_stats(counter, current_user_id)
-    update_pin_data(source, destination, counter, last_cursor, current_user_id)
+    update_pin_data(source, destination, counter, bookmark, current_user_id)
 
     res = {
-        "last_cursor": last_cursor,
+        "bookmark": bookmark,
         "pins_added": counter
     }
 
