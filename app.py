@@ -21,7 +21,7 @@ q = Queue(connection=conn, default_timeout=1200)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
-from services import get_token, save_token_to_database, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip, get_images, create_board_if_not_exists
+from services import get_token, save_token_to_database, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip, get_images, get_board_id
 from models import User
 
 # Create all database tables and create admin
@@ -91,30 +91,30 @@ def pin_it():
 	if not check_user_active():
 		return jsonify({"code": 401, "data": "/user/sign-out"})
 
-	data = request.form.to_dict(flat=False)
-	source_url = data['source'][0]
-	requests_left = data['requests_left'][0]
-	cont = bool(data['cont'][0])
+	data = request.json
+
+	source_url = data['source']
+	destination = data['destination']
+	requests_left = int(data['requests_left'])
+	cont = data['cont']
 	bookmark = None
 	pin_link = 'https://pinautomatic.herokuapp.com'
-	description = 'This Pin has been added auto-magically by the PinAutomatic app. Click on the Pin to go to PinAutomatic.'
+	description = 'This Pin has been added auto-magically by the PinAutomatic app. Check it out on https://pinautomatic.herokuapp.com.'
 
-	if data['pin_link'][0]:
-		pin_link = data['pin_link'][0]
+	if data['pin_link']:
+		pin_link = data['pin_link']
 
-	if data['description'][0]:
-		description = (data['description'][0][:498] + '..') if len(data['description'][0]) > 500 else description
+	if data['description']:
+		description = (data['description'][:498] + '..') if len(data['description'][0]) > 500 else description
 
-	if data['bookmark'][0]:
-		bookmark = int(data['bookmark'][0])
+	if data['bookmark']:
+		bookmark = int(data['bookmark'])
 
-	destination_board = data['destination'][0]
-	destination = create_board_if_not_exists(destination_board)
+	print(source_url, requests_left, cont, bookmark, pin_link, description)
 
 	pa_token = session['pa-token']
 
 	try:
-		# r = get_next_pins(source, requests_left, cont, cursor)
 		all_images = get_images(source_url, requests_left, cont, bookmark)
 
 		if not all_images:
@@ -132,12 +132,13 @@ def pin_it():
 
 	try:
 		job = q.enqueue_call(
-			func=save_pins, args=(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description), result_ttl=1200
+			func=save_pins, args=(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description), result_ttl=1200, job_timeout=3600
 		)
 		session['job_id'] = job.get_id()
+		# save_pins(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description)
 	except Exception as e:
 		response = {
-			"data": f"Error while adding job to RQ: {e}",
+			"data": f"Error while adding job to RQ: {e}.",
 			"code": 500
 		}
 		return jsonify(response)
@@ -169,17 +170,20 @@ def get_requests_left():
 def check_last_pin_status():
 	data = request.form.to_dict(flat=False)
 	source = data['source'][0]
-	destination = data['destination'][0]
+	destination_board = data['destination'][0]
+	destination = get_board_id(destination_board)  # returns board ID
 
 	last_pin_details = get_last_pin_details(source, destination)
 	res = {
-		"code": 404
+		"code": 404,
+		"destination": destination
 	}
 
 	if last_pin_details:
 		res = {
 			"code": 200,
-			"pins_copied": last_pin_details['pins_copied']
+			"pins_copied": last_pin_details['pins_copied'],
+			"destination": destination
 		}
 
 	return res
@@ -201,10 +205,10 @@ def check_session_status():
 			return session_status
 
 		if job.is_finished:
-			session_status["status"] = "Last Job completed."
+			session_status["status"] = f"Last Job completed: {job.result}"
 			session_status["code"] = 200
 		elif job.is_failed:
-			session_status["status"] = f"""Last Job failed: {job.__dict__['exc_info']}
+			session_status["status"] = f"""Last Job failed: {job.exc_info}
 			
 			If this error is unclear, please contact the developer about it. 
 			
@@ -231,17 +235,18 @@ def check_session_status():
 
 def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, current_user_id, pin_link, description):
 	counter = 0
+	skipped = 0
 	start_index = bookmark + 1 if cont is True else 0
 
+	url = PINTEREST_API_BASE_URL + '/pins'
+
+	headers = {
+		"Authorization": f"Bearer {pa_token}"
+	}
+
 	for i in range(start_index, len(pins)):
-		url = PINTEREST_API_BASE_URL + '/pins'
-
-		headers = {
-			"Authorization": f"Bearer {pa_token}"
-		}
-
 		put_data = {
-			"board": destination,
+			"board_id": destination,
 			"description": description,
 			"source_url": pin_link,
 			"image_url": pins[i]
@@ -249,27 +254,32 @@ def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, cur
 
 		try:
 			r = requests.put(url, headers=headers, data=put_data)
+			print(r)
 		except requests.exceptions.RequestException as e:
 			raise Exception(str({"code": 500, "data": str(e)}))
 
-		if r.status_code == 429:
-			raise Exception(str({"code": 429, "data": "Requests exhausted. Please try again later."}))
-
-		if r.status_code == 201:
+		if r.status_code == 200:
 			counter = counter + 1
 
-			if counter % 100 == 0:
-				update_stats(counter, current_user_id)
-				update_pin_data(source, destination, bookmark, current_user_id)
+			if counter == 100:
+				update_stats(current_user_id, pins_added=100)
+				update_pin_data(current_user_id, source, destination, pins_added=100)
+				counter = 0
+		elif r.status_code == 429:
+			raise Exception(str({"code": 429, "data": "Requests exhausted. Please try again later."}))
+		elif r.status_code == 403:
+			skipped += 1
+		else:
+			raise Exception(str({"code": 500, "data": f"{r.status_code}: {r.text}"}))
 
 	del pins
 
-	update_stats(counter, current_user_id)
-	update_pin_data(source, destination, bookmark, current_user_id)
+	update_stats(current_user_id, pins_added=counter)
+	update_pin_data(current_user_id, source, destination, pins_added=counter)
 
 	res = {
-		"bookmark": bookmark,
-		"pins_added": counter
+		"pins_added": counter,
+		"pins_skipped": skipped
 	}
 
 	return {"code": 200, "data": res}

@@ -1,6 +1,6 @@
 import math
 import os
-import urllib.parse
+import urllib.parse as urlparse
 from datetime import datetime
 
 import requests
@@ -112,6 +112,8 @@ def save_ip():
 def get_last_pin_details(source, destination):
 	pin_data = PinData.query.filter_by(user_id=current_user.id, source_board=source, destination_board=destination).first()
 
+	print(source, destination, pin_data)
+
 	data = None
 
 	if pin_data:
@@ -122,42 +124,41 @@ def get_last_pin_details(source, destination):
 	return data
 
 
-def update_pin_data(source, destination, bookmark, current_user_id):
+def update_pin_data(current_user_id, source, destination, pins_added):
 	if not PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first():
 		pin_data = PinData(
 			user_id=current_user_id,
 			source_board=source,
 			destination_board=destination,
-			bookmark=bookmark,
+			bookmark=pins_added,
 		)
 		db.session.add(pin_data)
 	else:
 		pin_data_instance = PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first()
-		pin_data_instance.pins_copied += pins_added
-		pin_data_instance.bookmark = bookmark
+		pin_data_instance.bookmark += pins_added
 
 	db.session.commit()
 	return True
 
 
-def update_stats(pin_added, current_user_id):
+def update_stats(current_user_id, pins_added):
 	if not Stats.query.filter_by(user_id=current_user_id).first():
 		stats = Stats(
 			user_id=current_user_id,
-			total_pins=pin_added,
+			total_pins=pins_added,
 			last_pin_at=datetime.utcnow()
 		)
 		db.session.add(stats)
 	else:
 		stats_instance = Stats.query.filter_by(user_id=current_user_id).first()
-		stats_instance.total_pins += pin_added
+		stats_instance.total_pins += pins_added
 		stats_instance.last_pin_at = datetime.utcnow()
 
 	db.session.commit()
 	return True
 
 
-def create_board_if_not_exists(board_name):
+def get_board_id(board_name):
 	headers = {
 		"Authorization": f"Bearer {session['pa-token']}"
 	}
@@ -231,11 +232,16 @@ def create_board_if_not_exists(board_name):
 def get_images(url, req_left, cont, bookmark):
 	r = requests.get(url, timeout=10)
 	htmldata = r.text
+	all_images = []
 	images = {}
 	x = 0
 
 	soup = BeautifulSoup(htmldata, 'html.parser')
-	all_images = soup.find_all('img')
+	all_image_elements = soup.find_all('img')
+	
+	for image_element in all_image_elements:
+		all_images.append(image_element['src'])
+	
 	max_images = len(all_images)
 	
 	if cont:
@@ -250,7 +256,7 @@ def get_images(url, req_left, cont, bookmark):
 
 
 	for x in range(max_images):  # If there are no images on the page, this will keep images = {}
-		images[x] = all_images[x]
+		images[x] = urlparse.urljoin(url, all_images[x])
 
 	print(images)
 
