@@ -116,26 +116,25 @@ def get_last_pin_details(source, destination):
 
 	if pin_data:
 		data = {
-			"pins_copied": pin_data.pins_copied
+			"pins_copied": pin_data.bookmark
 		}
 
 	return data
 
 
-def update_pin_data(source, destination, pins_added, last_cursor, current_user_id):
+def update_pin_data(source, destination, bookmark, current_user_id):
 	if not PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first():
 		pin_data = PinData(
 			user_id=current_user_id,
 			source_board=source,
 			destination_board=destination,
-			pins_copied=pins_added,
-			cursor=last_cursor,
+			bookmark=bookmark,
 		)
 		db.session.add(pin_data)
 	else:
 		pin_data_instance = PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first()
 		pin_data_instance.pins_copied += pins_added
-		pin_data_instance.cursor = last_cursor
+		pin_data_instance.bookmark = bookmark
 
 	db.session.commit()
 	return True
@@ -157,6 +156,24 @@ def update_stats(pin_added, current_user_id):
 	db.session.commit()
 	return True
 
+
+def create_board_if_not_exists(board_name):
+	headers = {
+		"Authorization": f"Bearer {session['pa-token']}"
+	}
+
+	data = {
+		"name": board_name,
+		"return_existing": True
+	}
+
+	url = PINTEREST_API_BASE_URL + '/boards'
+	r = requests.put(url, data=data, headers=headers)
+	if r.status_code == 200:
+		res = r.json()
+		board_id = res['data']['id']
+
+	return board_id
 
 # def get_next_pins(source, req_left, cont, cursor):
 # 	remainder = math.ceil(int(req_left)/250)  #250 is max page_size with v3

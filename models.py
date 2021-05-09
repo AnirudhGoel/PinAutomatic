@@ -60,8 +60,7 @@ class PinData(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
     source_board = db.Column(db.String(300), index=True, nullable=False, default="")
     destination_board = db.Column(db.String(300), index=True, nullable=False, default="")
-    pins_copied = db.Column(db.Integer(), server_default='0')
-    cursor = db.Column(db.String(300), nullable=False, default="")
+    bookmark = db.Column(db.Integer(), server_default='0')
 
 
 class PinterestData(db.Model):

@@ -20,7 +20,7 @@ function pinThem(event) {
 
 	// var sourceBoard = extractBoard($("#source_board").val());
 	var sourceURL = isValidUrl($("#source_url").val().trim());
-	var destinationBoard = extractBoard($("#destination_board").val());
+	var destinationBoard = $("#destination_board").val().trim();
 
 	var pinLink = $("#pin_link").val() ? $("#pin_link").val() != false : null;
 	var description = $("#description").val() ? $("#description").val() : null;
@@ -35,7 +35,7 @@ function pinThem(event) {
 		return;
 	}
 
-	$.get('check-last-pin-status', {source: sourceURL, destination: destinationBoard},function (data) {
+	$.post('check-last-pin-status', {source: sourceURL, destination: destinationBoard},function (data) {
 		console.log(data);
 		if (data.code == 200 && data.pins_copied != "") {
 			cont = confirm("You have pinned " + data.pins_copied + " pins from this URL. Do you want to continue with the next one? Press Cancel to restart.");
@@ -45,31 +45,22 @@ function pinThem(event) {
 			bookmark = data.pins_copied
 		}
 
-		$.post("pin-it", {source: sourceBoard, destination: destinationBoard, requests_left: requestsLeft, cont: cont, cursor: cursor, pin_link: pinLink, description: description}, function(result) {
+		$.post("pin-it", {source: sourceURL, destination: destinationBoard, requests_left: requestsLeft, cont: cont, bookmark: bookmark, pin_link: pinLink, description: description}, function(result) {
 			console.log(result);
 			if (result.code == 401) {
 				window.location.href = result.data;
 			} else if (result.code == 500) {
-				$('#status').text('Unexpected error occurred: Please contact the developer.');
+				$('#status').text('Unexpected error occurred: ' + result.data + 'Please contact the developer.');
 			} else if (result.code == 204) {
+				$('#status').text(result.data);
+			} else if (result.code == 422) {
 				$('#status').text(result.data);
 			} else {
 				updater();
 			}
+			$("#pin-button").attr("disabled", false);
 		});
 	});
-}
-
-function extractBoard(board) {
-	if (board.substring(0,6) == "https:") {
-		var board_parts = board.split("/");
-		board = board_parts[3] + "/" + board_parts[4];
-	} else if (board.replace(/^\/|\/$/g, "").split("/").length == 2) {
-		board = board.replace(/^\/|\/$/g, "");
-	} else {
-		return false;
-	}
-	return board;
 }
 
 function getRequestsLeft() {
