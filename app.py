@@ -209,9 +209,9 @@ def check_session_status():
 			session_status["code"] = 200
 		elif job.is_failed:
 			session_status["status"] = f"""Last Job failed: {job.exc_info}
-			
-			If this error is unclear, please contact the developer about it. 
-			
+
+			If this error is unclear, please contact the developer about it.
+
 			Otherwise, please enter new job."""
 			session_status["code"] = 500
 		elif not job.is_finished:

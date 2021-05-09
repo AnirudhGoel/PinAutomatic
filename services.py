@@ -238,12 +238,12 @@ def get_images(url, req_left, cont, bookmark):
 
 	soup = BeautifulSoup(htmldata, 'html.parser')
 	all_image_elements = soup.find_all('img')
-	
+
 	for image_element in all_image_elements:
 		all_images.append(image_element['src'])
-	
+
 	max_images = len(all_images)
-	
+
 	if cont:
 		if len(all_images) > bookmark:  # Do we have more images after bookmark
 			if len(all_images) - bookmark > req_left:
