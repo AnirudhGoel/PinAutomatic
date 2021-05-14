@@ -4,12 +4,13 @@ import urllib.parse as urlparse
 from datetime import datetime
 
 import requests
+from bs4 import BeautifulSoup
 from flask import abort, request, session
 from flask_user import UserManager, current_user
-from bs4 import BeautifulSoup
 
 from app import app, db
-from models import IPDetails, PinData, PinterestData, Stats, Token, User, Payments
+from models import (IPDetails, Payments, PinData, PinterestData, Stats, Token,
+                    User)
 
 # Setup Flask-User and specify the User data-model
 user_manager = UserManager(app, db, User)
@@ -262,3 +263,19 @@ def get_images(url, req_left, cont, bookmark):
 	print(images)
 
 	return images if images != {} else None
+
+
+def save_stripe_session_id(session_id):
+	payments_instance = Payments.query.filter_by(user_id=current_user.id).first()
+	payments_instance.stripe_session_id = session_id
+
+	db.session.commit()
+
+
+def update_payment(stripe_session_id, amount, pins_bought, currency='USD'):
+	payments_instance = Payments.query.filter_by(stripe_session_id=stripe_session_id).first()
+	payments_instance.amount_received += amount
+	payments_instance.pins_bought += pins_bought
+	payments_instance.stripe_session_id = ''
+
+	db.session.commit()

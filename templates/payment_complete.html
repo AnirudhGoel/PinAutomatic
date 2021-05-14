@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block head %}
+    <meta http-equiv="refresh" content="5;url=/home" />
+{% endblock %}
+
+{% block content %}
+    {% if data.payment_success == true %}
+    <strong>Payment successful.<br>Redirecting to Home Page in 5 secs...</strong>
+    {% elif data.payment_success == false %}
+    <strong>Payment failed.<br>Redirecting to Home Page in 5 secs...</strong>
+    {% endif %}
+{% endblock %}

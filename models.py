@@ -91,3 +91,4 @@ class Payments(db.Model):
     amount_received = db.Column(db.Integer(), default=0)
     currency = db.Column(db.String(3), nullable=False, default="")
     pins_bought = db.Column(db.Integer(), default=0)
+    stripe_session_id = db.Column(db.String(300), nullable=False, default="")

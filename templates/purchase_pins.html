@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block head %}
+<script src="https://js.stripe.com/v3/"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="pin-bundle" id="1">
+    <label class="form-check-label" for="1">
+      $10 = 1000 Pins
+    </label>
+  </div>
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="pin-bundle" id="2" checked>
+    <label class="form-check-label" for="2">
+      $40 = 5000 Pins
+    </label>
+  </div>
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="pin-bundle" id="3">
+    <label class="form-check-label" for="3">
+      $70 = 10000 Pins
+    </label>
+  </div>
+
+  <button type="button" id="checkout-button">Checkout</button>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+var stripe = Stripe("pk_test_2NnDpbC276Wpzdrb8PhHcOgW00YWLBqXTg");
+var checkoutButton = document.getElementById("checkout-button");
+
+checkoutButton.addEventListener("click", function () {
+  var pinBundleId = parseInt($("input[name='pin-bundle']:checked").attr('id'));
+  var data = {
+    "bundle_id": pinBundleId
+  }
+
+  console.log(data)
+
+  fetch("/create-checkout-session", {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (session) {
+      return stripe.redirectToCheckout({ sessionId: session.id });
+    })
+    .then(function (result) {
+      // If redirectToCheckout fails due to a browser or network
+      // error, you should display the localized error message to your
+      // customer using error.message.
+      if (result.error) {
+        alert(result.error.message);
+      }
+    })
+    .catch(function (error) {
+      console.error("Error:", error);
+    });
+});
+</script>
+{% endblock %}

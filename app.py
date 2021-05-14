@@ -1,28 +1,41 @@
-import os
-from flask import Flask, render_template, session, request, redirect, url_for, flash, jsonify, abort
-from flask_babelex import Babel
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_user import current_user, login_required
-from config import ConfigClass
-from rq import Queue
-import requests
-from rq.job import Job
-from worker import conn
-import urllib.parse as urlparse
-import time
 import hashlib
+import os
+import time
+import urllib.parse as urlparse
+
+import requests
+import stripe
+from flask import (Flask, abort, flash, jsonify, redirect, render_template,
+                   request, session, url_for)
+from flask_babelex import Babel
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from flask_user import current_user, login_required
+from rq import Queue
+from rq.job import Job
+
+from config import ConfigClass
+from worker import conn
 
 app = Flask(__name__)
 app.config.from_object(ConfigClass)
 
 q = Queue(connection=conn, default_timeout=1200)
 
+stripe.api_key = 'sk_test_51GXX6jHre4fhXQaIlgm3mSi19gqGH7VeXIoCKqJqqEL08jfJ2fkGVxkXKCqx7Jy4YVHJGtfVeYk2qCbdioD5F1hC008fZu6EWw'
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
-from services import get_token, save_token_to_database, update_pinterest_profile, get_last_pin_details, update_pin_data, update_stats, save_ip, get_images, get_board_id, get_pins_available_from_subscription, get_pins_added, get_total_pins_from_subscription, get_pinterest_requests_left, update_pinterest_requests_left
 from models import User
+from services import (get_board_id, get_images, get_last_pin_details,
+                      get_pins_added, get_pins_available_from_subscription,
+                      get_pinterest_requests_left, get_token,
+                      get_total_pins_from_subscription, save_ip,
+                      save_stripe_session_id, save_token_to_database,
+                      update_payment, update_pin_data,
+                      update_pinterest_profile, update_pinterest_requests_left,
+                      update_stats)
 
 # Create all database tables and create admin
 # db.create_all()
@@ -335,3 +348,72 @@ def check_user_active():
 		return True
 	else:
 		return False
+
+
+@app.route('/purchase-pins')
+@login_required
+def purchase_pins():
+	return render_template('purchase_pins.html')
+
+
+@app.route('/payment_complete')
+def payment_complete():
+	stripe_session_id = request.args.get('session_id')
+	checkout_session = stripe.checkout.Session.retrieve(stripe_session_id)
+
+	if checkout_session['payment_status'] == 'paid':
+		pay_amount = int(checkout_session['amount_total'])/100
+
+		pay_to_pin_map = {
+			10: 1000,
+			40: 5000,
+			70: 10000,
+		}
+		pins_bought = pay_to_pin_map[pay_amount]
+
+		update_payment(stripe_session_id, pay_amount, pins_bought)
+
+		return render_template('payment_complete.html', data={'payment_success': True})
+	elif checkout_session['payment_status'] == 'unpaid':
+		return render_template('payment_complete.html', data={'payment_success': False})
+
+	print(checkout_session)
+
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+	pin_bundles = {
+		1: {'price': 1000},
+		2: {'price': 4000},
+		3: {'price': 7000},
+	}
+
+	data = request.json
+	bundle_id = int(data['bundle_id'])
+
+	try:
+		checkout_session = stripe.checkout.Session.create(
+			payment_method_types=['card'],
+			line_items=[
+				{
+					'price_data': {
+						'currency': 'usd',
+						'unit_amount': pin_bundles[bundle_id]['price'],
+						'product_data': {
+							'name': 'PinAutomatic Pin Bundle',
+							'images': ['https://i.imgur.com/EHyR2nP.png'],
+						},
+					},
+					'quantity': 1,
+				},
+			],
+			mode='payment',
+			success_url= SITE_SCHEME + "://" + SITE_DOMAIN + "/payment_complete?session_id={CHECKOUT_SESSION_ID}",
+			cancel_url= SITE_SCHEME + "://" + SITE_DOMAIN + "/payment_complete?session_id={CHECKOUT_SESSION_ID}",
+		)
+		print(checkout_session)
+		save_stripe_session_id(checkout_session.id)
+		return jsonify({'id': checkout_session.id})
+	except Exception as e:
+		print('HERE', str(e))
+		return jsonify(error=str(e)), 403
