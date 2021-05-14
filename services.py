@@ -144,10 +144,19 @@ def update_pin_data(current_user_id, source, destination, cont, pins_added):
 
 
 def update_stats(current_user_id, pinterest_requests_left=None, pins_added=None):
-	stats_instance = Stats.query.filter_by(user_id=current_user_id).first()
-	stats_instance.pins_added = stats_instance.pins_added + pins_added if pins_added else stats_instance.pins_added
-	stats_instance.pinterest_requests_left = pinterest_requests_left if pinterest_requests_left else stats_instance.pinterest_requests_left
-	stats_instance.last_pin_at = datetime.utcnow()
+	# If Stats does not exist, it will be created on the first call to Home URL
+	if not Stats.query.filter_by(user_id=current_user_id).first():
+		pinterest_requests_left = pinterest_requests_left if pinterest_requests_left else 0
+		stats_data = Stats(
+			user_id=current_user_id,
+			pinterest_requests_left=pinterest_requests_left
+		)
+		db.session.add(stats_data)
+	else:
+		stats_instance = Stats.query.filter_by(user_id=current_user_id).first()
+		stats_instance.pins_added = stats_instance.pins_added + pins_added if pins_added else stats_instance.pins_added
+		stats_instance.pinterest_requests_left = pinterest_requests_left if pinterest_requests_left else stats_instance.pinterest_requests_left
+		stats_instance.last_pin_at = datetime.utcnow()
 
 	db.session.commit()
 	return True
