@@ -2,41 +2,6 @@
 
 
 {% block content %}
-	<!-- Modal -->
-	<div id="help" class="modal fade" role="dialog">
-		<div class="modal-dialog modal-lg">
-
-			<!-- Modal content-->
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
-					<h4 class="modal-title">Help</h4>
-				</div>
-				<div class="modal-body">
-					<h1>Working</h1>
-					<br><br>
-					Once you're logged in, you don't need to login again unless there has been an inactivity for more than 7 days or you clear out your cookies. The app stores your Pinterest Token in cookies, so enable cookies to avoid logging in everytime you use this app. <br>
-					Source Board and Destination Boards can be entered in 2 ways- <br>
-					<ul>
-						<li> Either the complete URL of boards can be entered from the Pinterest Site. </li>
-						<li> Or you can enter it manually as "Username/Board-name", if you know the username and board name of the person. </li>
-					</ul>
-					The Destination Board can even be a Secret Board in your account.<br><br>
-
-					<h1>Limitations</h1>
-					<br><br>
-					The only limitation is that you can only pin 1000 pins per hour as this is the limit put up by Pinterest API, but I think that a 1000 pins must be enough for one day ;) .
-
-					<h2>Disclaimer</h2>
-					This app complies completely with <a href="https://developers.pinterest.com/policy/">Pinterest Developer's Policy</a>. If you have any issues contact me via <a href="http://scr.im/3hmx">email</a>.
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-				</div>
-			</div>
-		</div>
-	</div>
-
 	<div class="greeting">Hello <strong>{{ data.full_name }}</strong></div>
 
 	<div class="input-area">
@@ -79,7 +44,6 @@
 				Total Pins Bought: <span id="pins-bought">{{ data.total_pins_bought }}</span><br>
 				Total Pins Added: <span id="pins-added">{{ data.pins_added }}</span>
 			</div>
-			<!-- <button class="btn btn-lg btn-warning" type="button" data-toggle="modal" data-target="#help">Help</button> -->
 			<button class="btn btn-lg btn-warning" type="button" onclick="location.href='/purchase-pins'">Buy More Pins</button>
 			<input disabled type="submit" class="btn btn-lg btn-danger" id="pin-button" value="Pin Them !">
 			<br><br>
