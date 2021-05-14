@@ -50,17 +50,18 @@ class Stats(db.Model):
     __tablename__ = 'stats'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    total_pins = db.Column(db.Integer(), server_default='0')
+    pins_added = db.Column(db.Integer(), default=0)
     last_pin_at = db.Column(db.DateTime(), server_default=None)
+    pinterest_requests_left = db.Column(db.Integer(), default=0)
 
 
 class PinData(db.Model):
     __tablename__ = 'pin_data'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    source_board = db.Column(db.String(300), index=True, nullable=False, default="")
+    source_board = db.Column(db.String(2000), index=True, nullable=False, default="")
     destination_board = db.Column(db.String(300), index=True, nullable=False, default="")
-    bookmark = db.Column(db.Integer(), server_default='0')
+    bookmark = db.Column(db.Integer(), default=0)
 
 
 class PinterestData(db.Model):
@@ -81,3 +82,12 @@ class IPDetails(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
     ip_address = db.Column(db.String(300), nullable=False, default="")
+
+
+class Payments(db.Model):
+    __tablename__ = 'payments'
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
+    amount_received = db.Column(db.Integer(), default=0)
+    currency = db.Column(db.String(3), nullable=False, default="")
+    pins_bought = db.Column(db.Integer(), default=0)

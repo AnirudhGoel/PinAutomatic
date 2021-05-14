@@ -9,7 +9,7 @@ from flask_user import UserManager, current_user
 from bs4 import BeautifulSoup
 
 from app import app, db
-from models import IPDetails, PinData, PinterestData, Stats, Token, User
+from models import IPDetails, PinData, PinterestData, Stats, Token, User, Payments
 
 # Setup Flask-User and specify the User data-model
 user_manager = UserManager(app, db, User)
@@ -53,7 +53,7 @@ def save_token_to_database(token):
 	return token
 
 
-def save_profile_and_return_requests_left():
+def update_pinterest_profile():
 	headers = {
 		"Authorization": f"Bearer {session['pa-token']}"
 	}
@@ -62,9 +62,6 @@ def save_profile_and_return_requests_left():
 	r = requests.get(url, headers=headers)
 	if r.status_code == 200:
 		res = r.json()
-
-		print(res)
-
 		res = res["data"]
 
 		if not PinterestData.query.filter_by(user_id=current_user.id).first():
@@ -90,7 +87,7 @@ def save_profile_and_return_requests_left():
 
 		db.session.commit()
 
-		return {"data": r.headers['x-userendpoint-ratelimit-remaining'], "code": 200}
+		return {"full_name": res['full_name'], "code": 200}
 	elif r.status_code == 401:
 		return {"data": "Access token invalid.", "code": 401}
 
@@ -124,38 +121,53 @@ def get_last_pin_details(source, destination):
 	return data
 
 
-def update_pin_data(current_user_id, source, destination, pins_added):
-	if not PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first():
-		pin_data = PinData(
-			user_id=current_user_id,
-			source_board=source,
-			destination_board=destination,
-			bookmark=pins_added,
-		)
-		db.session.add(pin_data)
-	else:
+def update_pin_data(current_user_id, source, destination, cont, pins_added):
+	if cont:  # if cont, then we update the existing bookmark
 		pin_data_instance = PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first()
 		pin_data_instance.bookmark += pins_added
+	else:  # if not cont, then either there was no entry in PinData or we overwrite existing entry
+		if not PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first():
+			pin_data = PinData(
+				user_id=current_user_id,
+				source_board=source,
+				destination_board=destination,
+				bookmark=pins_added,
+			)
+			db.session.add(pin_data)
+		else:
+			pin_data_instance = PinData.query.filter_by(user_id=current_user_id, source_board=source, destination_board=destination).first()
+			pin_data_instance.bookmark = pins_added
 
 	db.session.commit()
 	return True
 
 
-def update_stats(current_user_id, pins_added):
-	if not Stats.query.filter_by(user_id=current_user_id).first():
-		stats = Stats(
-			user_id=current_user_id,
-			total_pins=pins_added,
-			last_pin_at=datetime.utcnow()
-		)
-		db.session.add(stats)
-	else:
-		stats_instance = Stats.query.filter_by(user_id=current_user_id).first()
-		stats_instance.total_pins += pins_added
-		stats_instance.last_pin_at = datetime.utcnow()
+def update_stats(current_user_id, pinterest_requests_left=None, pins_added=None):
+	stats_instance = Stats.query.filter_by(user_id=current_user_id).first()
+	stats_instance.pins_added = stats_instance.pins_added + pins_added if pins_added else stats_instance.pins_added
+	stats_instance.pinterest_requests_left = pinterest_requests_left if pinterest_requests_left else stats_instance.pinterest_requests_left
+	stats_instance.last_pin_at = datetime.utcnow()
 
 	db.session.commit()
 	return True
+
+
+def update_pinterest_requests_left():
+	headers = {
+		"Authorization": f"Bearer {session['pa-token']}"
+	}
+
+	url = PINTEREST_API_BASE_URL + '/pins'
+	r = requests.put(url, headers=headers)
+	if r.status_code == 400:  # 400 Bad Request expected as we are not passing Board ID
+		update_stats(current_user.id, pinterest_requests_left=r.headers['x-userendpoint-ratelimit-remaining'])
+	elif r.status_code == 429:
+		update_stats(current_user.id, pinterest_requests_left=0)
+
+
+def get_pinterest_requests_left():
+	stats_instance = Stats.query.filter_by(user_id=current_user.id).first()
+	return int(stats_instance.pinterest_requests_left)
 
 
 def get_board_id(board_name):
@@ -176,57 +188,47 @@ def get_board_id(board_name):
 
 	return board_id
 
-# def get_next_pins(source, req_left, cont, cursor):
-# 	remainder = math.ceil(int(req_left)/250)  #250 is max page_size with v3
 
-# 	print("Remainder = " + str(remainder))
+def get_pins_available_from_subscription(current_user_id):
+	payments_data = Payments.query.filter_by(user_id=current_user_id).first()
+	total_pins_purchased = int(payments_data.pins_bought)
 
-# 	all_pins = []
+	stats_data = Stats.query.filter_by(user_id=current_user_id).first()
+	pins_added = int(stats_data.pins_added)
 
-# 	params = {
-# 		"page_size": 250,
-# 		"filter_section_pins": False,
-# 		"filter_stories": True
-# 	}
-# 	if cont == "true":
-# 		params["bookmark"] = cursor
+	return total_pins_purchased - pins_added if total_pins_purchased > pins_added else 0
 
-# 	headers = {
-# 		"Authorization": f"Bearer {session['pa-token']}"
-# 	}
 
-# 	for x in range(remainder):
-# 		session['status'] = "Fetching Pins: " + str((x + 1) * 250)
-# 		url_params = urllib.parse.urlencode(params)
-# 		url = PINTEREST_API_BASE_URL + f"/boards/{source}/pins"
-# 		r = requests.get(url, params=url_params, headers=headers)
+def get_pins_added():
+	pins_added = 0
 
-# 		print(url)
+	if not Stats.query.filter_by(user_id=current_user.id).first():
+		stats = Stats(
+			user_id=current_user.id
+		)
+		db.session.add(stats)
+		db.session.commit()
+	else:
+		stats = Stats.query.filter_by(user_id=current_user.id).first()
+		pins_added = stats.pins_added
 
-# 		print(r.json())
+	return pins_added
 
-# 		abort(500)
 
-# 		if r.status_code == 200:
-# 			res = r.json()
-# 			all_pins = all_pins + res["data"]
+def get_total_pins_from_subscription():
+	total_pins_from_subscription = 0
 
-# 			if res["page"]["cursor"] != None:
-# 				params["cursor"] = res["page"]["cursor"]
-# 			else:
-# 				# If requests left > number of pins in the source board
-# 				params["cursor"] = ""
-# 				break
-# 		else:
-# 			print(r.json())
-# 			abort(500)
+	if not Payments.query.filter_by(user_id=current_user.id).first():
+		payments = Payments(
+			user_id=current_user.id
+		)
+		db.session.add(payments)
+		db.session.commit()
+	else:
+		payments_instance = Payments.query.filter_by(user_id=current_user.id).first()
+		total_pins_from_subscription = payments_instance.pins_bought
 
-# 	response = {
-# 		"all_pins": all_pins,
-# 		"last_cursor": params["cursor"]
-# 	}
-
-# 	return response
+	return total_pins_from_subscription
 
 
 def get_images(url, req_left, cont, bookmark):
@@ -253,7 +255,6 @@ def get_images(url, req_left, cont, bookmark):
 	else:
 		if len(all_images) > req_left:
 			max_images = req_left
-
 
 	for x in range(max_images):  # If there are no images on the page, this will keep images = {}
 		images[x] = urlparse.urljoin(url, all_images[x])

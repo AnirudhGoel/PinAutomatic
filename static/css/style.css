@@ -29,19 +29,34 @@ h1 {
 	margin-bottom: 0.5em;
 	font-size: 1.8em;
 	font-weight: bolder;
+	text-align: left;
+	margin-left: 12.5%;
 }
 .input-box {
 	margin-bottom: 2.4em;
 }
 .status-box {
 	background-color: rgba(211, 84, 0, 0.2);
-	width: 80%;
+	width: 75%;
 	border-radius: 5px;
 	min-height: 5em;
 	text-align: left;
 	padding: 10px 10px 10px 10px;
 }
 .status-box, .text {
+	font-weight: bold;
+	font-size: 1.2em;
+}
+.stats-box {
+	background-color: rgba(69,37,51,0.2);
+	width: 75%;
+	border-radius: 5px;
+	min-height: 5em;
+	text-align: left;
+	padding: 10px 10px 10px 10px;
+	vertical-align: middle;
+}
+.stats-box, .text {
 	font-weight: bold;
 	font-size: 1.2em;
 }
@@ -130,7 +145,6 @@ h1 {
 	}
 	.title {
 		margin-top: 30px;
-		text-align: center;
 	}
 	.input-box {
 		margin-top: 10px;

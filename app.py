@@ -21,7 +21,7 @@ q = Queue(connection=conn, default_timeout=1200)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
-from services import get_token, save_token_to_database, save_profile_and_return_requests_left, get_last_pin_details, update_pin_data, update_stats, save_ip, get_images, get_board_id
+from services import get_token, save_token_to_database, update_pinterest_profile, get_last_pin_details, update_pin_data, update_stats, save_ip, get_images, get_board_id, get_pins_available_from_subscription, get_pins_added, get_total_pins_from_subscription, get_pinterest_requests_left, update_pinterest_requests_left
 from models import User
 
 # Create all database tables and create admin
@@ -57,9 +57,24 @@ def home():
 	}
 	session['state'] = credentials['state']
 
-	if 'pa-token' in session:
-		return render_template('index.html', title='Home')
-	else:
+	if 'pa-token' in session:  # User logged in and authorized via Pinterest
+		r = update_pinterest_profile()
+		if r['code'] == 200:
+			full_name = r['full_name']
+			data = {
+				'full_name': full_name
+			}
+		elif r['code'] == 401:
+			session.pop('pa-token')
+			return redirect('/user/sign-out')
+
+		update_pinterest_requests_left()
+
+		data['total_pins_bought'] = get_total_pins_from_subscription()
+		data['pins_added'] = get_pins_added()
+		save_ip()
+		return render_template('index.html', title='Home', data=data)
+	else:  # User not authorized via Pinterest
 		return render_template('authorize.html', title='Login', credentials=credentials)
 
 
@@ -95,22 +110,17 @@ def pin_it():
 
 	source_url = data['source']
 	destination = data['destination']
-	requests_left = int(data['requests_left'])
+	requests_left = get_pinterest_requests_left()
 	cont = data['cont']
-	bookmark = None
-	pin_link = 'https://pinautomatic.herokuapp.com'
+	pin_link = data['pin_link'] if data['pin_link'] else 'https://pinautomatic.herokuapp.com'
+	pin_title = data['pin_title'] if data['pin_title'] else 'Pin created by PinAutomatic'
+	bookmark = int(data['bookmark']) if data['bookmark'] else None
 	description = 'This Pin has been added auto-magically by the PinAutomatic app. Check it out on https://pinautomatic.herokuapp.com.'
 
-	if data['pin_link']:
-		pin_link = data['pin_link']
-
 	if data['description']:
-		description = (data['description'][:498] + '..') if len(data['description'][0]) > 500 else description
+		description = (data['description'][:498] + '..') if len(data['description'][0]) > 500 else data['description']
 
-	if data['bookmark']:
-		bookmark = int(data['bookmark'])
-
-	print(source_url, requests_left, cont, bookmark, pin_link, description)
+	print(source_url, requests_left, cont, bookmark, pin_link, pin_title, description)
 
 	pa_token = session['pa-token']
 
@@ -119,7 +129,7 @@ def pin_it():
 
 		if not all_images:
 			response = {
-				"data": "No Images to Pin. URL has no images? Or all images on this page have been pinned, please try again with continue = False.",
+				"data": "No Images to Pin. URL has no images? Or if Pinterest requests are exhausted, try again later? Or if all images on this page have been pinned, please try again with continue = False.",
 				"code": 204
 			}
 			return jsonify(response)
@@ -132,7 +142,7 @@ def pin_it():
 
 	try:
 		job = q.enqueue_call(
-			func=save_pins, args=(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description), result_ttl=1200, job_timeout=3600
+			func=save_pins, args=(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description, pin_title), result_ttl=1200, timeout=3600
 		)
 		session['job_id'] = job.get_id()
 		# save_pins(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description)
@@ -153,21 +163,29 @@ def pin_it():
 @app.route('/get-requests-left')
 @login_required
 def get_requests_left():
-	res = save_profile_and_return_requests_left()
-	time.sleep(2)
-	if res['code'] == 200:
-		requests_left = res['data']
-	elif res['code'] == 401:
-		session.pop('pa-token')
-		return {'code': 401, 'data': '/user/sign-out'}
-	session['req_left'] = requests_left
-	save_ip()
-	return {'code': 200, 'data': requests_left}
+	pinterest_req = get_pinterest_requests_left()
+	pins_added = get_pins_added()
+
+	res = {
+		"pinterest_req_left": pinterest_req,
+		"pins_added": pins_added,
+		"code": 200
+	}
+
+	return jsonify(res)
 
 
 @app.route('/check-last-pin-status', methods=['POST'])
 @login_required
 def check_last_pin_status():
+	pins_available_from_subscription = get_pins_available_from_subscription(current_user.id)
+	if pins_available_from_subscription == 0:
+		res = {
+			"code": 429,
+			"data": "Pins exhausted. Please purchase more pins to continue using the app."
+		}
+		return res
+
 	data = request.form.to_dict(flat=False)
 	source = data['source'][0]
 	destination_board = data['destination'][0]
@@ -233,10 +251,12 @@ def check_session_status():
 #     pass
 
 
-def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, current_user_id, pin_link, description):
+def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, current_user_id, pin_link, description, pin_title):
 	counter = 0
+	added = 0
 	skipped = 0
 	start_index = bookmark + 1 if cont is True else 0
+	pins_available_from_subscription = get_pins_available_from_subscription(current_user_id)
 
 	url = PINTEREST_API_BASE_URL + '/pins'
 
@@ -245,11 +265,15 @@ def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, cur
 	}
 
 	for i in range(start_index, len(pins)):
+		if pins_available_from_subscription == 0:
+			return {"code": 429, "data": f"Pins exhausted. Please purchase more pins to continue using the app.\nAdded: {counter}\nSkipped: {skipped}"}
+
 		put_data = {
 			"board_id": destination,
 			"description": description,
 			"source_url": pin_link,
-			"image_url": pins[i]
+			"image_url": pins[i],
+			"title": pin_title
 		}
 
 		try:
@@ -259,11 +283,16 @@ def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, cur
 			raise Exception(str({"code": 500, "data": str(e)}))
 
 		if r.status_code == 200:
-			counter = counter + 1
+			counter += 1
+			added += 1
+			pins_available_from_subscription -= 1
 
-			if counter == 100:
-				update_stats(current_user_id, pins_added=100)
-				update_pin_data(current_user_id, source, destination, pins_added=100)
+			print(r.headers)
+
+			if counter == 10:
+				pinterest_requests_left = r.headers['x-userendpoint-ratelimit-remaining']
+				update_stats(current_user_id=current_user_id, pinterest_requests_left=pinterest_requests_left, pins_added=10)
+				update_pin_data(current_user_id, source, destination, cont, pins_added=10)
 				counter = 0
 		elif r.status_code == 429:
 			raise Exception(str({"code": 429, "data": "Requests exhausted. Please try again later."}))
@@ -274,11 +303,12 @@ def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, cur
 
 	del pins
 
-	update_stats(current_user_id, pins_added=counter)
-	update_pin_data(current_user_id, source, destination, pins_added=counter)
+	pinterest_requests_left = r.headers['x-userendpoint-ratelimit-remaining']
+	update_stats(current_user_id=current_user_id, pinterest_requests_left=pinterest_requests_left, pins_added=counter)
+	update_pin_data(current_user_id, source, destination, cont, pins_added=counter)
 
 	res = {
-		"pins_added": counter,
+		"pins_added": added,
 		"pins_skipped": skipped
 	}
 

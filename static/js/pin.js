@@ -1,12 +1,11 @@
-var requestsLeft = 0;
 var cont = false;
 var bookmark = null;
 var t;
 var done = 0;
 
 $(document).ready(function() {
-	getRequestsLeft();
-	updater();
+	updateSessionStatus();
+	updateRequestsLeft();
 });
 
 function pinThem(event) {
@@ -22,6 +21,7 @@ function pinThem(event) {
 	var destinationBoard = $("#destination_board").val().trim();
 
 	var pinLink = $("#pin_link").val() ? $("#pin_link").val() : null;
+	var pinTitle = $("#pin_title").val() ? $("#pin_title").val() : null;
 	var description = $("#description").val() ? $("#description").val() : null;
 
 	if (sourceURL == false) {
@@ -35,8 +35,13 @@ function pinThem(event) {
 	}
 
 	$.post('check-last-pin-status', {source: sourceURL, destination: destinationBoard},function (data) {
-		// This call also converts board name to board ID
-		destinationBoard = data.destination
+		if (data.code == 429) {
+			$('#status').text(data.data);
+			$("#pin-button").attr("disabled", false);
+			return;
+		}
+
+		destinationBoard = data.destination  // This call also converts board name to board ID
 
 		if (data.code == 200 && data.pins_copied != "") {
 			cont = confirm("You have pinned " + data.pins_copied + " pins from this URL. Do you want to continue with the next one? Press Cancel to restart.");
@@ -47,7 +52,7 @@ function pinThem(event) {
 		$.ajax({
 			type: 'POST',
 			url: "pin-it",
-			data: JSON.stringify({source: sourceURL, destination: destinationBoard, requests_left: requestsLeft, cont: cont, bookmark: bookmark, pin_link: pinLink, description: description}),
+			data: JSON.stringify({source: sourceURL, destination: destinationBoard, cont: cont, bookmark: bookmark, pin_link: pinLink, description: description, pin_title: pinTitle}),
 			contentType: "application/json",
 			dataType: 'json',
 			success: function(result) {
@@ -64,23 +69,10 @@ function pinThem(event) {
 					$('#status').text(result.data);
 					$("#pin-button").attr("disabled", false);
 				} else {
-					updater();
+					updateSessionStatus();
 				}
 			}
 		});
-	});
-}
-
-function getRequestsLeft() {
-	$.get('get-requests-left', function (data) {
-		if (data.code == 401) {
-			window.location.href = data.data;
-		} else if (data.code == 200) {
-			requestsLeft = data.data;
-			// console.log(requestsLeft);
-
-			$("#pins-left").text(requestsLeft);
-		}
 	});
 }
 
@@ -95,7 +87,7 @@ function isValidUrl(url) {
 	}
 }
 
-function updater() {
+function updateSessionStatus() {
 	$.ajax({
 		url: 'check-session-status',
 		success: function(data) {
@@ -111,12 +103,18 @@ function updater() {
 			// Schedule the next request when the current one's complete
 			if (done == 1) {
 				clearTimeout(t);
-				// console.log("Clear Timeout");
-				getRequestsLeft();
 				return;
 			}
-
-			t = setTimeout(updater, 4000);
+			t = setTimeout(updateSessionStatus, 2000);
 		}
+	});
+}
+
+function updateRequestsLeft() {
+	$.get('get-requests-left', function (data) {
+		$("#requests-left").text(data.pinterest_req_left);
+		$("#pins-added").text(data.pins_added);
+
+		p = setTimeout(updateRequestsLeft, 2000);
 	});
 }
