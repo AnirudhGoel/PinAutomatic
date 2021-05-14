@@ -22,8 +22,6 @@ app.config.from_object(ConfigClass)
 
 q = Queue(connection=conn, default_timeout=1200)
 
-stripe.api_key = 'sk_test_51GXX6jHre4fhXQaIlgm3mSi19gqGH7VeXIoCKqJqqEL08jfJ2fkGVxkXKCqx7Jy4YVHJGtfVeYk2qCbdioD5F1hC008fZu6EWw'
-
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
@@ -45,7 +43,9 @@ PINTEREST_CLIENT_ID = os.environ.get("PINTEREST_CLIENT_ID")
 PINTEREST_API_BASE_URL = os.environ.get("PINTEREST_API_BASE_URL")
 SITE_SCHEME = os.environ.get("SITE_SCHEME", default="https")
 SITE_DOMAIN = os.environ.get("SITE_DOMAIN", default="pinautomatic.herokuapp.com")
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 
+stripe.api_key = STRIPE_SECRET_KEY
 
 @app.route('/')
 def index():

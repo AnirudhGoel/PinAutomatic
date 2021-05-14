@@ -1,0 +1,13 @@
+.form-check {
+    padding: 1em 0 1em 0;
+    border: 3px white solid;
+    border-radius: 10px;
+    width: 80%;
+    margin: 2em 0 2em 0;
+    background-color: rgba(255, 255, 255, 0.5);
+    font-size: 1.2em;
+    line-height: 2em;
+}
+.offer {
+    color: green;
+}

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/purchase_pins.css') }}">
 <script src="https://js.stripe.com/v3/"></script>
 {% endblock %}
 
@@ -8,27 +9,29 @@
   <div class="form-check">
     <input class="form-check-input" type="radio" name="pin-bundle" id="1">
     <label class="form-check-label" for="1">
-      $10 = 1000 Pins
+      1,000 Pins<br>$10
     </label>
   </div>
   <div class="form-check">
     <input class="form-check-input" type="radio" name="pin-bundle" id="2" checked>
     <label class="form-check-label" for="2">
-      $40 = 5000 Pins
+      5,000 Pins<br>$40&nbsp;&nbsp;<span class="offer">(20% Off)</span>
     </label>
   </div>
   <div class="form-check">
     <input class="form-check-input" type="radio" name="pin-bundle" id="3">
     <label class="form-check-label" for="3">
-      $70 = 10000 Pins
+      10,000 Pins<br>$70&nbsp;&nbsp;<span class="offer">(30% Off)</span>
     </label>
   </div>
 
-  <button type="button" id="checkout-button">Checkout</button>
+  <button type="button" class="btn btn-lg btn-success" id="checkout-button">Checkout</button>
+  <br><br>
 {% endblock %}
 {% block script %}
 <script type="text/javascript">
-var stripe = Stripe("pk_test_2NnDpbC276Wpzdrb8PhHcOgW00YWLBqXTg");
+// var stripe = Stripe("pk_test_2NnDpbC276Wpzdrb8PhHcOgW00YWLBqXTg");
+var stripe = Stripe("pk_live_NWqBLNbw4gWLOvFBwLKExko3008t5HI9i2");
 var checkoutButton = document.getElementById("checkout-button");
 
 checkoutButton.addEventListener("click", function () {
@@ -36,8 +39,6 @@ checkoutButton.addEventListener("click", function () {
   var data = {
     "bundle_id": pinBundleId
   }
-
-  console.log(data)
 
   fetch("/create-checkout-session", {
     method: "POST",

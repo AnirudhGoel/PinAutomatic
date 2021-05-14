@@ -37,33 +37,38 @@
 		</div>
 	</div>
 
-	<div class="intro">Hello {{ data.full_name }}, please enter the Source URl from which you want to pin all pictures to the Destination Board.</div>
+	<div class="greeting">Hello <strong>{{ data.full_name }}</strong></div>
 
 	<div class="input-area">
 		<form onsubmit="pinThem(event);">
 			<div class="title">Source URL</div>
+			<div class="help-text">Enter any URL to parse images.</div>
 			<div class="input-box">
 				<input type="text" id="source_url" class="input-lg" placeholder="Source URL">
 				<div id="err1"></div>
 			</div>
 
 			<div class="title">Destination Board</div>
+			<div class="help-text">Name of the destination board where you'd like to pin these images. Board is created if does not exist.</div>
 			<div class="input-box">
 				<input type="text" id="destination_board" class="input-lg" placeholder="Board Name">
 				<div id="err2"></div>
 			</div>
 
 			<div class="title">Pin Link</div>
+			<div class="help-text">This is the URL a user reaches when he clicks on any pin on your board.</div>
 			<div class="input-box">
 				<input type="text" id="pin_link" class="input-lg" placeholder="https://pinautomatic.herokuapp.com">
 			</div>
 
 			<div class="title">Pin Title</div>
+			<div class="help-text">Title of the Pin on Pinterest.</div>
 			<div class="input-box">
 				<input type="text" id="pin_title" class="input-lg" placeholder="PinAutomatic">
 			</div>
 
 			<div class="title">Pin Description</div>
+			<div class="help-text">Add any custom description on all pins in your board.</div>
 			<div class="input-box">
 				<textarea id="description" class="input-lg" placeholder="Description" rows="3"></textarea>
 			</div>
@@ -74,7 +79,7 @@
 				Total Pins Bought: <span id="pins-bought">{{ data.total_pins_bought }}</span><br>
 				Total Pins Added: <span id="pins-added">{{ data.pins_added }}</span>
 			</div>
-			<button class="btn btn-lg btn-warning" type="button" data-toggle="modal" data-target="#help">Help</button>
+			<!-- <button class="btn btn-lg btn-warning" type="button" data-toggle="modal" data-target="#help">Help</button> -->
 			<button class="btn btn-lg btn-warning" type="button" onclick="location.href='/purchase-pins'">Buy More Pins</button>
 			<input disabled type="submit" class="btn btn-lg btn-danger" id="pin-button" value="Pin Them !">
 			<br><br>
