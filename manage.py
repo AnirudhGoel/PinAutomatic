@@ -1,5 +1,5 @@
 import os
-from config import ConfigClass
+from .config import ConfigClass
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 

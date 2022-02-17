@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 from flask import abort, request, session
 from flask_user import UserManager, current_user
 
-from app import app, db
-from models import (IPDetails, Payments, PinData, PinterestData, Stats, Token,
+from .app import app, db
+from .models import (IPDetails, Payments, PinData, PinterestData, Stats, Token,
                     User)
 
 # Setup Flask-User and specify the User data-model
