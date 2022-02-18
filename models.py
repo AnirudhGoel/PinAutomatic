@@ -68,13 +68,7 @@ class PinterestData(db.Model):
     __tablename__ = 'pinterest_data'
     id = db.Column(db.Integer(), primary_key=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
-    pinterest_id = db.Column(db.BigInteger())
     username = db.Column(db.String(300), nullable=False, default="")
-    full_name = db.Column(db.String(300), nullable=False, default="")
-    pins = db.Column(db.Integer())
-    boards = db.Column(db.Integer())
-    following = db.Column(db.Integer())
-    followers = db.Column(db.Integer())
 
 
 class IPDetails(db.Model):

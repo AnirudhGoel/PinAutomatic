@@ -66,16 +66,17 @@ def home():
 	credentials = {
 		'client_id': PINTEREST_CLIENT_ID,
 		'redirect_uri': SITE_SCHEME + "://" + SITE_DOMAIN,
-		'state': hashlib.sha256(os.urandom(1024)).hexdigest()
+		'state': hashlib.sha256(os.urandom(1024)).hexdigest(),
+		'scope': 'boards:read,boards:read_secret,boards:write,boards:write_secret,pins:write,pins:write_secret,user_accounts:read'
 	}
 	session['state'] = credentials['state']
 
 	if 'pa-token' in session:  # User logged in and authorized via Pinterest
 		r = update_pinterest_profile()
 		if r['code'] == 200:
-			full_name = r['full_name']
+			username = r['username']
 			data = {
-				'full_name': full_name
+				'username': username
 			}
 		elif r['code'] == 401:
 			session.pop('pa-token')

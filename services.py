@@ -30,7 +30,7 @@ def get_token(temp_code, redirect_uri):
 	}
 
 	# url_params = urllib.parse.urlencode(params)
-	token_url = PINTEREST_API_BASE_URL + "/oauth/access_token"
+	token_url = PINTEREST_API_BASE_URL + "/oauth/token"
 	r = requests.post(token_url, data=data)
 	response = r.json()
 	print(response)
@@ -59,36 +59,24 @@ def update_pinterest_profile():
 		"Authorization": f"Bearer {session['pa-token']}"
 	}
 
-	url = PINTEREST_API_BASE_URL + '/users/me'
+	url = PINTEREST_API_BASE_URL + '/user_account'
 	r = requests.get(url, headers=headers)
 	if r.status_code == 200:
 		res = r.json()
-		res = res["data"]
 
 		if not PinterestData.query.filter_by(user_id=current_user.id).first():
 			pinterest_data = PinterestData(
 				user_id=current_user.id,
-				pinterest_id=res["id"],
 				username=res["username"],
-				full_name=res["full_name"],
-				pins=res["pin_count"],
-				boards=res["board_count"],
-				followers=res["follower_count"],
-				following=res["following_count"],
 			)
 			db.session.add(pinterest_data)
 		else:
 			pinterest_data_instance = PinterestData.query.filter_by(user_id=current_user.id).first()
 			pinterest_data_instance.username = res["username"]
-			pinterest_data_instance.full_name = res["full_name"]
-			pinterest_data_instance.pins = res["pin_count"]
-			pinterest_data_instance.boards = res["board_count"]
-			pinterest_data_instance.followers = res["follower_count"]
-			pinterest_data_instance.following = res["following_count"]
 
 		db.session.commit()
 
-		return {"full_name": res['full_name'], "code": 200}
+		return {"username": res['username'], "code": 200}
 	elif r.status_code == 401:
 		return {"data": "Access token invalid.", "code": 401}
 
