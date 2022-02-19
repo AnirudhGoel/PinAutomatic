@@ -14,8 +14,8 @@ from flask_user import current_user, login_required
 from rq import Queue
 from rq.job import Job
 
-from .config import ConfigClass
-from .worker import conn
+from config import ConfigClass
+from worker import conn
 
 app = Flask(__name__)
 app.config.from_object(ConfigClass)
@@ -25,8 +25,8 @@ q = Queue(connection=conn, default_timeout=1200)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 babel = Babel(app)
-from .models import User
-from .services import (get_board_id, get_images, get_last_pin_details,
+from models import User
+from services import (get_board_id, get_images, get_last_pin_details,
                       get_pins_added, get_pins_available_from_subscription,
                       get_pinterest_requests_left, get_token,
                       get_total_pins_from_subscription, save_ip,
