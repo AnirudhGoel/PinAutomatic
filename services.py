@@ -61,6 +61,9 @@ def update_pinterest_profile():
 
 	url = PINTEREST_API_BASE_URL + '/user_account'
 	r = requests.get(url, headers=headers)
+
+	print(r.headers)
+
 	if r.status_code == 200:
 		res = r.json()
 
@@ -157,6 +160,9 @@ def update_pinterest_requests_left():
 
 	url = PINTEREST_API_BASE_URL + '/pins'
 	r = requests.put(url, headers=headers)
+
+	print(r.json())
+
 	if r.status_code == 400:  # 400 Bad Request expected as we are not passing Board ID
 		update_stats(current_user.id, pinterest_requests_left=r.headers['x-userendpoint-ratelimit-remaining'])
 	elif r.status_code == 429:

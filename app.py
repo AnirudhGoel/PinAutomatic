@@ -160,7 +160,7 @@ def pin_it():
 			func=save_pins, args=(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description, pin_title), result_ttl=1200, timeout=3600
 		)
 		session['job_id'] = job.get_id()
-		# save_pins(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description)
+		# save_pins(all_images, source_url, destination, bookmark, requests_left, cont, pa_token, current_user.id, pin_link, description, pin_title)
 	except Exception as e:
 		response = {
 			"data": f"Error while adding job to RQ: {e}.",
