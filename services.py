@@ -172,19 +172,22 @@ def get_board_id(board_name):
 	headers = {
 		"Authorization": f"Bearer {session['pa-token']}"
 	}
-
-	data = {
-		"name": board_name,
-		"return_existing": True
-	}
+	#
+	# data = {
+	# 	"name": board_name,
+	# 	"return_existing": True
+	# }
 
 	url = PINTEREST_API_BASE_URL + '/boards'
-	r = requests.put(url, data=data, headers=headers)
+	r = requests.get(url, headers=headers)
+
 	if r.status_code == 200:
 		res = r.json()
-		board_id = res['data']['id']
+		print(res)
 
-	return board_id
+		for item in res['items']:
+			if item['name'].lower() == board_name.lower():
+				return item['id']
 
 
 def get_pins_available_from_subscription(current_user_id):
@@ -240,7 +243,8 @@ def get_images(url, req_left, cont, bookmark):
 	all_image_elements = soup.find_all('img')
 
 	for image_element in all_image_elements:
-		all_images.append(image_element['src'])
+		if image_element.get('src', None) and image_element['src'].endswith('.jpg'):
+			all_images.append(image_element['src'])
 
 	max_images = len(all_images)
 

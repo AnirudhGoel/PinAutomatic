@@ -1,6 +1,7 @@
 import hashlib
 import os
 import time
+import json
 import urllib.parse as urlparse
 
 import requests
@@ -67,7 +68,7 @@ def home():
 		'client_id': PINTEREST_CLIENT_ID,
 		'redirect_uri': SITE_SCHEME + "://" + SITE_DOMAIN,
 		'state': hashlib.sha256(os.urandom(1024)).hexdigest(),
-		'scope': 'boards:read,boards:read_secret,boards:write,boards:write_secret,pins:write,pins:write_secret,user_accounts:read'
+		'scope': 'boards:read,boards:read_secret,boards:write,boards:write_secret,pins:read,pins:write,pins:write_secret,user_accounts:read'
 	}
 	session['state'] = credentials['state']
 
@@ -275,7 +276,8 @@ def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, cur
 	url = PINTEREST_API_BASE_URL + '/pins'
 
 	headers = {
-		"Authorization": f"Bearer {pa_token}"
+		"Authorization": f"Bearer {pa_token}",
+		"Content-Type": "application/json",
 	}
 
 	for i in range(start_index, len(pins)):
@@ -285,23 +287,28 @@ def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, cur
 		put_data = {
 			"board_id": destination,
 			"description": description,
-			"source_url": pin_link,
-			"image_url": pins[i],
-			"title": pin_title
+			"link": pin_link,
+			"title": pin_title,
+			"media_source": {
+				"source_type": "image_url",
+				"url": pins[i]
+			}
 		}
 
 		try:
-			r = requests.put(url, headers=headers, data=put_data)
-			print(r)
+			r = requests.post(url, headers=headers, data=json.dumps(put_data))
+			print(r.json())
 		except requests.exceptions.RequestException as e:
 			raise Exception(str({"code": 500, "data": str(e)}))
 
-		if r.status_code == 200:
+		if r.status_code == 201:
 			counter += 1
 			added += 1
 			pins_available_from_subscription -= 1
 
 			print(r.headers)
+
+			time.sleep(10)
 
 			if counter == 10:
 				pinterest_requests_left = r.headers['x-userendpoint-ratelimit-remaining']
