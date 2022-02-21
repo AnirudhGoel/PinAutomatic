@@ -1,27 +1,66 @@
 ![PinAutomatic Logo](static/img/pinterest.png)
-# Pin Automatic
-#### A webapp to Pin all images of one Pinterest Board to another
-Pinning pins from someone's board to yours individually is so tiring. So, I made a webapp to do this boring work !
+# PinAutomatic
+### Pinterest Marketing Made Easy
 
-# Working
-* The app first asks you to login to your Pinterest Account using the [OAuth 2.0](href="http://oauth.net/documentation/") process, so as to get rights to pin to your boards.
-* As the app uses Pinterest's OAuth 2.0 process, none of your crendentials are stored in the app.
-* Once you're logged in, you don't need to login again unless there has been an inactivity for more than 7 days or you clear out your cookies. The app stores your Pinterest Token in cookies, so enable cookies to avoid logging in everytime you use this app.
-* Next, you enter the Source Board (from which you want the pins to be taken) and the Destination Board (where you want the pins to be pinned). Source Board and Destination Boards can be entered in 2 ways-
-  * Either the complete URL of boards can be entered from the Pinterest Site.
-  * or you can enter it manually as "Username/Board-name", if you know the username and board name of the person.
-* The app then calls an API which in turn will then call Pinterest API to fetch pins from source board and pin them to destination board.
+![example workflow](https://github.com/AnirudhGoel/PinAutomatic/actions/workflows/codeql-analysis.yml/badge.svg)
 
-> The app doesn't store any of your credentials or even your token. The token is stored locally in cookies.
-> The Destination Board can even be a Secret Board in your account.
 
-# Limitations
-The only limitation is that you can only pin 1000 pins per hour as this is the limit put up by Pinterest API, but I think that a 1000 pins must be enough for one day :wink: .
+Pin all images from any URL to your Pinterest Board, auto-magically. &#10024; 
 
-# Screenshots
-![Screenshot 1](static/img/ss/ss1.png)
+You can also customise the title, link and description of the pin thus making it a great marketing tool.
 
-![Screenshot 2](static/img/ss/ss2.png)
+### But what are Pins / Pinterest?
+To know in detail about Pinterest or Pins you can refer their [official docs](https://help.pinterest.com/en-gb/guide/all-about-pinterest). To give an overview, here's a snippet from that doc.
+
+![pins](static/img/pins.png)
+
+In addition to sharing ideas, Pinterest can be used as a great marketing platform.
+As you can see in the image above, every Pin has a title, description and link associated with it. This link can take the user to any URL that you add to the pin.
+
+
+### Use Cases
+There are 2 primary use cases for this app:
+  - When you find a website which has many images that you'd like to add to your Pinterest Board, you can use the app to do so, without having to add those pictures one by one.
+  - If you run a Brand Page on Pinterest, you can use this app to pin images from your website to your Pinterest page, with your website's link. That way, if a user likes a pin and clicks on it, it takes them to your website.
+
+> Note: The app does not support copying of copyrighted images. So please ensure you have the rights to copy images from the Source URL.
+
+### Usage
+  - Register or login to your PinAutomatic account. You need a valid email to register.
+  - Authorize PinAutomatic to access your account. To understand why PinAutomatic asks for these permissions refer to the [Pinterest API Docs](https://developers.pinterest.com/docs/api/v5/).
+  - Fill the following options:
+    - `Source URL`: The website to grab images from
+    - `Destination Board`: Name of the destination board where you'd like to pin these images. **Board should already exist in the profile.** Can also be a Secret Board.
+    - `Pin Link`: This is the URL a user reaches when he clicks on any pin on your board, ideally your brand's website
+    - `Pin Title`: Title of the Pin on Pinterest
+    - `Pin Description`: Add any custom description on all pins in your board, can be keywords related to your brand
+
+
+### Deploying locally
+To deploy a local version for development, you first need to [obtain an API token from Pinterest](https://developers.pinterest.com/).
+After that follow the following steps:
+```bash
+git clone git@github.com:AnirudhGoel/PinAutomatic.git
+cd PinAutomatic
+python3 -m virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp env.sample .env
+# populate .env file
+flask run
+```
+
+### Note
+> This app was initially built using Pinterest API v2 and has come a long way since to v5. With every new version of Pinterest API, it is required to re-register the app and obtain new API credentials. But with the current Pinterest API update, which is currently in Beta, Pinterest will probably remove the functionality to access the pins from other people's boards (even public ones), so the app has now been updated to parse images from any website and not solely rely on Pinterest boards for source pins. This is still experimental. As the new Pinterest API is rolling out, and Pinterest mandates to re-register the app for new API credentials, the app is currently running in basic mode, which allows limited number of pins per hour. So, while it can be used for testing purposes at the moment, it will again be upgraded to full mode once the app gets upgraded access for the Pinterest API.
+
+
+### Demo
+![demo](static/img/demo.gif)
+
+
+### Stargazers over time
+[![Stargazers over time](https://starchart.cc/AnirudhGoel/PinAutomatic.svg)](https://starchart.cc/AnirudhGoel/PinAutomatic)
+
 
 --------------------------
 This app complies completely with [Pinterest Developer's Policy](https://developers.pinterest.com/policy/). If you have any issues contact me via [email](http://scr.im/3hmx).
