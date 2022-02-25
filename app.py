@@ -308,7 +308,7 @@ def save_pins(pins, source, destination, bookmark, req_left, cont, pa_token, cur
 
 			print(r.headers)
 
-			time.sleep(10)
+			time.sleep(1)
 
 			if counter == 10:
 				pinterest_requests_left = r.headers['x-userendpoint-ratelimit-remaining']

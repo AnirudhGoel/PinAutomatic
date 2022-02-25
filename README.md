@@ -51,7 +51,7 @@ flask run
 ```
 
 ### Note
-> This app was initially built using Pinterest API v2 and has come a long way since to v5. With every new version of Pinterest API, it is required to re-register the app and obtain new API credentials. But with the current Pinterest API update, which is currently in Beta, Pinterest will probably remove the functionality to access the pins from other people's boards (even public ones), so the app has now been updated to parse images from any website and not solely rely on Pinterest boards for source pins. This is still experimental. As the new Pinterest API is rolling out, and Pinterest mandates to re-register the app for new API credentials, the app is currently running in basic mode, which allows limited number of pins per hour. So, while it can be used for testing purposes at the moment, it will again be upgraded to full mode once the app gets upgraded access for the Pinterest API.
+This app was initially built using Pinterest API v2 and has come a long way since to v5. With every new version of Pinterest API, it is required to re-register the app and obtain new API credentials. Originally the app was designed to copy pins from any public board to your board, in bulk. But with the new Pinterest API update, which is currently in Beta, Pinterest has removed the functionality to access the pins from other people's boards (even public ones), so the app has now been updated to parse images from any website and not solely rely on Pinterest boards for source pins. This is still experimental. <br> **Update**: The app has been upgraded to have standard access with higher limits (see [Pinterest API Rate Limits](https://developers.pinterest.com/docs/api/v5/#tag/Rate-limits)).
 
 
 ### Demo
