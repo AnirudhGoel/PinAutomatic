@@ -2,7 +2,7 @@
 body {
 	background-color: white;
 	font-family: 'Brandon Text', 'Open Sans', sans-serif;
-	font-weight: 300;
+	font-weight: 400;
 }
 .outer-box {
 	width: 90%;
@@ -63,7 +63,7 @@ body {
 	transition: 0.3s all linear !important;
 }
 label {
-	font-weight: 300;
+	font-weight: 400;
 }
 .intro-text {
 	margin-bottom: 30px;
