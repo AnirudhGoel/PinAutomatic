@@ -33,7 +33,7 @@ itsdangerous==1.1.0
 jedi==0.17.0
 Jinja2==2.11.3
 lazy-object-proxy==1.6.0
-Mako==1.1.0
+Mako==1.2.2
 MarkupSafe==1.1.1
 matplotlib-inline==0.1.2
 mccabe==0.6.1
