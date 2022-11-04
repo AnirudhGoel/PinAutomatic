@@ -10,15 +10,15 @@ class User(db.Model, UserMixin):
 
     # User authentication information. The collation='NOCASE' is required
     # to search case insensitively when USER_IFIND_MODE is 'nocase_collation'.
-    email = db.Column(db.String(255, collation='C'), nullable=False, unique=True, index=True)
+    email = db.Column(db.String(255, collation='NOCASE'), nullable=False, unique=True, index=True)
     email_confirmed_at = db.Column(db.DateTime())
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     # username = db.Column(db.String(255, collation='C'), nullable=True, unique=True, server_default=None)
     password = db.Column(db.String(255), nullable=False, server_default='')
 
     # User information
-    first_name = db.Column(db.String(100, collation='C'), nullable=False, server_default='')
-    last_name = db.Column(db.String(100, collation='C'), nullable=False, server_default='')
+    first_name = db.Column(db.String(100, collation='NOCASE'), nullable=False, server_default='')
+    last_name = db.Column(db.String(100, collation='NOCASE'), nullable=False, server_default='')
 
     # Define the relationship to Role via UserRoles
     roles = db.relationship('Role', secondary='user_roles')
@@ -84,5 +84,5 @@ class Payments(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id', ondelete='CASCADE'), index=True)
     amount_received = db.Column(db.Integer(), default=0)
     currency = db.Column(db.String(3), nullable=False, default="")
-    pins_bought = db.Column(db.Integer(), default=0)
+    pins_bought = db.Column(db.Integer(), default=10000)
     stripe_session_id = db.Column(db.String(300), nullable=False, default="")
