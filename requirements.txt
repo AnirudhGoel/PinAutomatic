@@ -13,7 +13,7 @@ cffi==1.12.3
 chardet==3.0.4
 charset-normalizer==2.0.11
 Click==7.0
-cryptography==3.3.2
+cryptography==39.0.1
 decorator==5.0.7
 Flask==1.1.1
 Flask-BabelEx==0.9.3
