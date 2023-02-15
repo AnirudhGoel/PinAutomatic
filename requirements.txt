@@ -65,6 +65,6 @@ traitlets==4.3.3
 typed-ast==1.4.3
 urllib3==1.26.5
 wcwidth==0.2.5
-Werkzeug==0.15.5
+Werkzeug==2.2.3
 wrapt==1.12.1
 WTForms==2.2.1
